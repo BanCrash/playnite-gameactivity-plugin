@@ -4,7 +4,7 @@ param(
 )
 
 
-$PlaynitePathTEMP = "C:\Playnite_dev"
+$PlaynitePathTEMP = "C:\Juegos\Playnite"
 if (Test-Path -Path $PlaynitePathTEMP) 
 {
 	$PlaynitePath = $PlaynitePathTEMP
