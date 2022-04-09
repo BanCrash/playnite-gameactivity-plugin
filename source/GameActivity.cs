@@ -1615,6 +1615,67 @@ namespace GameActivity
                                 platform = "7ed1c0fb-e14f-49bd-973d-887f99519d6f";
                                 platformName = "Xbox";
                                 break;
+                            case 16: // Custom
+                                if (game.plOv != null)
+                                {
+                                    switch (game.plOv)
+                                    {
+                                        case "Windows shortcut": // Windows shortcut
+                                            platform = "";
+                                            platformName = "Windows shortcut";
+                                            break;
+                                        case "Steam": // Steam
+                                            platform = "21f997f9-9044-42e7-96b4-41fb85f407ec";
+                                            platformName = "Steam";
+                                            break;
+                                        case "Amazon": // Amazon
+                                            platform = "80a1a4c6-d3ad-4c61-a598-bd152ac6e69f";
+                                            platformName = "Amazon";
+                                            break;
+                                        case "GOG": // GOG
+                                            platform = "cd6abd90-e4df-49d6-af7c-f4c07245197f";
+                                            platformName = "GOG";
+                                            break;
+                                        case "Battle.net": // Battle.net
+                                            platform = "b555a171-d215-4df4-a238-ff9af575c722";
+                                            platformName = "Battle.net";
+                                            break;
+                                        case "Epic": // Epic
+                                            platform = "8adf1fb5-3565-4f36-b558-8f9aaf7318d2";
+                                            platformName = "Epic";
+                                            break;
+                                        case "Humble": // Humble
+                                            platform = "b90e548e-347f-415c-a061-d7554e1ed9a4";
+                                            platformName = "Humble";
+                                            break;
+                                        case "Origin": // Origin
+                                            platform = "05bd84c8-d051-4226-ae76-5e21e8720c06";
+                                            platformName = "Origin";
+                                            break;
+                                        case "Riot Games": // Riot Games
+                                            platform = "8c9e8671-0155-444a-9f08-62326110fd8f";
+                                            platformName = "Riot Games";
+                                            break;
+                                        case "Ubisoft Connect": // Ubisoft Connect
+                                            platform = "80c7e54d-b563-426a-b1ff-b0af75670e42";
+                                            platformName = "Ubisoft Connect";
+                                            break;
+                                        case "Xbox": // Xbox
+                                            platform = "7ed1c0fb-e14f-49bd-973d-887f99519d6f";
+                                            platformName = "Xbox";
+                                            break;
+                                        default:
+                                            platform = "";
+                                            platformName = "Custom | " + game.plOv;
+                                            break;
+                                    }
+                                }
+                                else
+                                {
+                                    platform = "";
+                                    platformName = "Custom";
+                                }
+                                break;
                             default:
                                 platform = "";
                                 platformName = "";
@@ -1795,6 +1856,67 @@ namespace GameActivity
                             case 14: // Xbox
                                 platform = "7ed1c0fb-e14f-49bd-973d-887f99519d6f";
                                 platformName = "Xbox";
+                                break;
+                            case 16: // Custom
+                                if (game.plOv != null)
+                                {
+                                    switch (game.plOv)
+                                    {
+                                        case "Windows shortcut": // Windows shortcut
+                                            platform = "";
+                                            platformName = "Windows shortcut";
+                                            break;
+                                        case "Steam": // Steam
+                                            platform = "21f997f9-9044-42e7-96b4-41fb85f407ec";
+                                            platformName = "Steam";
+                                            break;
+                                        case "Amazon": // Amazon
+                                            platform = "80a1a4c6-d3ad-4c61-a598-bd152ac6e69f";
+                                            platformName = "Amazon";
+                                            break;
+                                        case "GOG": // GOG
+                                            platform = "cd6abd90-e4df-49d6-af7c-f4c07245197f";
+                                            platformName = "GOG";
+                                            break;
+                                        case "Battle.net": // Battle.net
+                                            platform = "b555a171-d215-4df4-a238-ff9af575c722";
+                                            platformName = "Battle.net";
+                                            break;
+                                        case "Epic": // Epic
+                                            platform = "8adf1fb5-3565-4f36-b558-8f9aaf7318d2";
+                                            platformName = "Epic";
+                                            break;
+                                        case "Humble": // Humble
+                                            platform = "b90e548e-347f-415c-a061-d7554e1ed9a4";
+                                            platformName = "Humble";
+                                            break;
+                                        case "Origin": // Origin
+                                            platform = "05bd84c8-d051-4226-ae76-5e21e8720c06";
+                                            platformName = "Origin";
+                                            break;
+                                        case "Riot Games": // Riot Games
+                                            platform = "8c9e8671-0155-444a-9f08-62326110fd8f";
+                                            platformName = "Riot Games";
+                                            break;
+                                        case "Ubisoft Connect": // Ubisoft Connect
+                                            platform = "80c7e54d-b563-426a-b1ff-b0af75670e42";
+                                            platformName = "Ubisoft Connect";
+                                            break;
+                                        case "Xbox": // Xbox
+                                            platform = "7ed1c0fb-e14f-49bd-973d-887f99519d6f";
+                                            platformName = "Xbox";
+                                            break;
+                                        default:
+                                            platform = "";
+                                            platformName = "Custom | " + game.plOv;
+                                            break;
+                                    }
+                                }
+                                else
+                                {
+                                    platform = "";
+                                    platformName = "Custom";
+                                }
                                 break;
                             default:
                                 platform = "";
