@@ -132,7 +132,7 @@ namespace GameActivity
                     Title = resources.GetString("LOCGameActivityViewGamesActivities"),
                     Activated = () =>
                     {
-                        var windowOptions = new WindowOptions
+                        WindowOptions windowOptions = new WindowOptions
                         {
                             ShowMinimizeButton = false,
                             ShowMaximizeButton = true,
@@ -141,7 +141,7 @@ namespace GameActivity
                             Height = 740
                         };
 
-                        var ViewExtension = new GameActivityView();
+                        GameActivityView ViewExtension = new GameActivityView();
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGamesActivitiesTitle"), ViewExtension, windowOptions);
                         windowExtension.ResizeMode = ResizeMode.CanResize;
                         windowExtension.ShowDialog();
@@ -165,7 +165,7 @@ namespace GameActivity
                 {
                     Common.LogDebug(true, $"OnCustomThemeButtonClick()");
 
-                    var windowOptions = new WindowOptions
+                    WindowOptions windowOptions = new WindowOptions
                     {
                         ShowMinimizeButton = false,
                         ShowMaximizeButton = true,
@@ -174,7 +174,7 @@ namespace GameActivity
                         Height = 740
                     };
 
-                    var ViewExtension = new GameActivityViewSingle(PluginDatabase.GameContext);
+                    GameActivityViewSingle ViewExtension = new GameActivityViewSingle(PluginDatabase.GameContext);
                     Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGameActivity"), ViewExtension, windowOptions);
                     windowExtension.ResizeMode = ResizeMode.CanResize;
                     windowExtension.ShowDialog();
@@ -262,11 +262,7 @@ namespace GameActivity
 
                 if (!WithNotification)
                 {
-                    if ((!runMSI || !runRTSS))
-                    {
-                        return false;
-                    }
-                    return true;
+                    return runMSI && runRTSS;
                 }
             }
 
@@ -280,8 +276,7 @@ namespace GameActivity
         /// </summary>
         public void DataLogging_start(Guid Id)
         {
-            logger.Info($"DataLogging_start - {Id}");
-            
+            logger.Info($"DataLogging_start - {Id}");            
             RunningActivity runningActivity = runningActivities.Find(x => x.Id == Id);
 
             runningActivity.timer = new System.Timers.Timer(PluginSettings.Settings.TimeIntervalLogging * 60000);
@@ -296,7 +291,6 @@ namespace GameActivity
         public void DataLogging_stop(Guid Id)
         {
             logger.Info($"DataLogging_stop - {Id}");
-
             RunningActivity runningActivity = runningActivities.Find(x => x.Id == Id);
             if (runningActivity.WarningsMessage.Count != 0 && PlayniteApi.ApplicationInfo.Mode == ApplicationMode.Desktop)
             {
@@ -304,7 +298,7 @@ namespace GameActivity
                 {
                     Application.Current.Dispatcher.BeginInvoke((Action)delegate
                     {
-                        var ViewExtension = new WarningsDialogs(runningActivity.WarningsMessage);
+                        WarningsDialogs ViewExtension = new WarningsDialogs(runningActivity.WarningsMessage);
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGameActivityWarningCaption"), ViewExtension);
                         windowExtension.ShowDialog();
                     });
@@ -443,7 +437,7 @@ namespace GameActivity
                 {
                     try
                     {
-                        foreach (var sensorItems in dataHWinfo)
+                        foreach (HWiNFODumper.JsonObj sensorItems in dataHWinfo)
                         {
                             dynamic sensorItemsOBJ = Serialization.FromJson<dynamic>(Serialization.ToJson(sensorItems));
 
@@ -453,7 +447,7 @@ namespace GameActivity
                             if (sensorsID.ToLower() == PluginSettings.Settings.HWiNFO_fps_sensorsID.ToLower())
                             {
                                 // Find data fps
-                                foreach (var items in sensorItemsOBJ["sensors"])
+                                foreach (dynamic items in sensorItemsOBJ["sensors"])
                                 {
                                     dynamic itemOBJ = Serialization.FromJson<dynamic>(Serialization.ToJson(items));
                                     string dataID = "0x" + ((uint)itemOBJ["dwSensorID"]).ToString("X");
@@ -469,7 +463,7 @@ namespace GameActivity
                             if (sensorsID.ToLower() == PluginSettings.Settings.HWiNFO_gpu_sensorsID.ToLower())
                             {
                                 // Find data gpu
-                                foreach (var items in sensorItemsOBJ["sensors"])
+                                foreach (dynamic items in sensorItemsOBJ["sensors"])
                                 {
                                     dynamic itemOBJ = Serialization.FromJson<dynamic>(Serialization.ToJson(items));
                                     string dataID = "0x" + ((uint)itemOBJ["dwSensorID"]).ToString("X");
@@ -485,7 +479,7 @@ namespace GameActivity
                             if (sensorsID.ToLower() == PluginSettings.Settings.HWiNFO_gpuT_sensorsID.ToLower())
                             {
                                 // Find data gpu
-                                foreach (var items in sensorItemsOBJ["sensors"])
+                                foreach (dynamic items in sensorItemsOBJ["sensors"])
                                 {
                                     dynamic itemOBJ = Serialization.FromJson<dynamic>(Serialization.ToJson(items));
                                     string dataID = "0x" + ((uint)itemOBJ["dwSensorID"]).ToString("X");
@@ -501,7 +495,7 @@ namespace GameActivity
                             if (sensorsID.ToLower() == PluginSettings.Settings.HWiNFO_cpuT_sensorsID.ToLower())
                             {
                                 // Find data gpu
-                                foreach (var items in sensorItemsOBJ["sensors"])
+                                foreach (dynamic items in sensorItemsOBJ["sensors"])
                                 {
                                     dynamic itemOBJ = Serialization.FromJson<dynamic>(Serialization.ToJson(items));
                                     string dataID = "0x" + ((uint)itemOBJ["dwSensorID"]).ToString("X");
@@ -605,8 +599,13 @@ namespace GameActivity
         public void DataBackup_start(Guid Id)
         {
             RunningActivity runningActivity = runningActivities.Find(x => x.Id == Id);
+            if (runningActivity == null)
+            {
+                logger.Warn($"No runningActivity find for {Id}");
+                return;
+            }
 
-            runningActivity.timerBackup = new System.Timers.Timer(60000);
+            runningActivity.timerBackup = new System.Timers.Timer(PluginSettings.Settings.TimeIntervalLogging * 60000);
             runningActivity.timerBackup.AutoReset = true;
             runningActivity.timerBackup.Elapsed += (sender, e) => OnTimedBackupEvent(sender, e, Id);
             runningActivity.timerBackup.Start();            
@@ -615,6 +614,11 @@ namespace GameActivity
         public void DataBackup_stop(Guid Id)
         {
             RunningActivity runningActivity = runningActivities.Find(x => x.Id == Id);
+            if (runningActivity == null)
+            {
+                logger.Warn($"No runningActivity find for {Id}");
+                return;
+            }
 
             runningActivity.timerBackup.AutoReset = false;
             runningActivity.timerBackup.Stop();
@@ -697,7 +701,7 @@ namespace GameActivity
 
         public override IEnumerable<SidebarItem> GetSidebarItems()
         {
-            var items = new List<SidebarItem>
+            List<SidebarItem> items = new List<SidebarItem>
             {
                 gameActivityViewSidebar
             };
@@ -721,7 +725,7 @@ namespace GameActivity
                     Description = resources.GetString("LOCGameActivityViewGameActivity"),
                     Action = (gameMenuItem) =>
                     {
-                        var ViewExtension = new GameActivityViewSingle(GameMenu);
+                        GameActivityViewSingle ViewExtension = new GameActivityViewSingle(GameMenu);
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGameActivity"), ViewExtension);
                         windowExtension.ShowDialog();
                     }
@@ -761,7 +765,7 @@ namespace GameActivity
                     Description = resources.GetString("LOCGameActivityViewGamesActivities"),
                     Action = (mainMenuItem) =>
                     {
-                        var windowOptions = new WindowOptions
+                        WindowOptions windowOptions = new WindowOptions
                         {
                             ShowMinimizeButton = false,
                             ShowMaximizeButton = true,
@@ -770,7 +774,7 @@ namespace GameActivity
                             Height = 740
                         };
 
-                        var ViewExtension = new GameActivityView();
+                        GameActivityView ViewExtension = new GameActivityView();
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGamesActivitiesTitle"), ViewExtension, windowOptions);
                         windowExtension.ResizeMode = ResizeMode.CanResize;
                         windowExtension.ShowDialog();
@@ -867,7 +871,7 @@ namespace GameActivity
                                         FileSystem.WriteStringToFileSafe(SavPath, ExportedDatasCsv);
 
                                         string Message = string.Format(resources.GetString("LOCCommonExportDataResult"), ExportedDatasCsv.Count());
-                                        var result = PlayniteApi.Dialogs.ShowMessage(Message, PluginDatabase.PluginName, MessageBoxButton.YesNo);
+                                        MessageBoxResult result = PlayniteApi.Dialogs.ShowMessage(Message, PluginDatabase.PluginName, MessageBoxButton.YesNo);
                                         if (result == MessageBoxResult.Yes)
                                         {
                                             Process.Start(Path.GetDirectoryName(SavPath));
@@ -902,14 +906,14 @@ namespace GameActivity
                     Description = resources.GetString("LOCCommonTransferPluginData"),
                     Action = (mainMenuItem) =>
                     {
-                        var windowOptions = new WindowOptions
+                        WindowOptions windowOptions = new WindowOptions
                         {
                             ShowMinimizeButton = false,
                             ShowMaximizeButton = false,
                             ShowCloseButton = true,
                         };
 
-                        var ViewExtension = new TransfertData(PluginDatabase.GetDataGames(), PluginDatabase);
+                        TransfertData ViewExtension = new TransfertData(PluginDatabase.GetDataGames(), PluginDatabase);
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCCommonSelectTransferData"), ViewExtension, windowOptions);
                         windowExtension.ShowDialog();
                     }
@@ -921,14 +925,14 @@ namespace GameActivity
                     Description = resources.GetString("LOCCommonIsolatedPluginData"),
                     Action = (mainMenuItem) =>
                     {
-                        var windowOptions = new WindowOptions
+                        WindowOptions windowOptions = new WindowOptions
                         {
                             ShowMinimizeButton = false,
                             ShowMaximizeButton = false,
                             ShowCloseButton = true,
                         };
 
-                        var ViewExtension = new ListDataWithoutGame(PluginDatabase.GetIsolatedDataGames(), PluginDatabase);
+                        ListDataWithoutGame ViewExtension = new ListDataWithoutGame(PluginDatabase.GetIsolatedDataGames(), PluginDatabase);
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCCommonIsolatedPluginData"), ViewExtension, windowOptions);
                         windowExtension.ShowDialog();
                     }
@@ -1130,7 +1134,7 @@ namespace GameActivity
         // Add code to be executed when game is preparing to be started.
         public override void OnGameStopped(OnGameStoppedEventArgs args)
         {
-            var TaskGameStopped = Task.Run(() =>
+            Task.Run(() =>
             {
                 try
                 {
@@ -1302,27 +1306,45 @@ namespace GameActivity
                     Serialization.TryFromJsonFile<ActivityBackup>(objectFile, out ActivityBackup backupData);
                     if (backupData != null)
                     {
-                        Application.Current.Dispatcher.BeginInvoke((Action)delegate
+                        // If game is deleted...
+                        Game game = PluginDatabase.PlayniteApi.Database.Games.Get(backupData.Id);
+                        if (game == null)
                         {
-                            PlayniteApi.Notifications.Add(new NotificationMessage(
-                                $"{PluginDatabase.PluginName}-backup-{Path.GetFileNameWithoutExtension(objectFile)}",
-                                PluginDatabase.PluginName + System.Environment.NewLine + string.Format(resources.GetString("LOCGaBackupExist"), backupData.Name),
-                                NotificationType.Info,
-                                () =>
-                                {
-                                    WindowOptions windowOptions = new WindowOptions
+                            try
+                            {
+                                FileSystem.DeleteFileSafe(objectFile);
+                            }
+                            catch (Exception ex)
+                            {
+                                Common.LogError(ex, false, true, PluginDatabase.PluginName);
+                            }
+                        }
+                        // Otherwise...
+                        else
+                        {
+                            Application.Current.Dispatcher.BeginInvoke((Action)delegate
+                            {
+                                PlayniteApi.Notifications.Add(new NotificationMessage(
+                                    $"{PluginDatabase.PluginName}-backup-{Path.GetFileNameWithoutExtension(objectFile)}",
+                                    PluginDatabase.PluginName + System.Environment.NewLine + string.Format(resources.GetString("LOCGaBackupExist"), backupData.Name),
+                                    NotificationType.Info,
+                                    () =>
                                     {
-                                        ShowMinimizeButton = false,
-                                        ShowMaximizeButton = false,
-                                        ShowCloseButton = true,
-                                    };
+                                        WindowOptions windowOptions = new WindowOptions
+                                        {
+                                            ShowMinimizeButton = false,
+                                            ShowMaximizeButton = false,
+                                            ShowCloseButton = true,
+                                            CanBeResizable = true
+                                        };
 
-                                    GameActivityBackup ViewExtension = new GameActivityBackup(backupData);
-                                    Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGaBackupDataInfo"), ViewExtension, windowOptions);
-                                    windowExtension.ShowDialog();
-                                }
-                            ));
-                        });
+                                        GameActivityBackup ViewExtension = new GameActivityBackup(backupData);
+                                        Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGaBackupDataInfo"), ViewExtension, windowOptions);
+                                        windowExtension.ShowDialog();
+                                    }
+                                ));
+                            });
+                        }
                     }
                 });
             }

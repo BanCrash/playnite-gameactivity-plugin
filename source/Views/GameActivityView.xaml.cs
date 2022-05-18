@@ -126,68 +126,87 @@ namespace GameActivity.Views
             // Add column if log details enable.
             if (!PluginDatabase.PluginSettings.Settings.EnableLogging)
             {
-                lvView.Columns.RemoveAt(17);
-                lvView.Columns.RemoveAt(16);
-                lvView.Columns.RemoveAt(15);
-                lvView.Columns.RemoveAt(14);
-                lvView.Columns.RemoveAt(13);
-                lvView.Columns.RemoveAt(12);
-                lvView.Columns.RemoveAt(11);
-                lvView.Columns.RemoveAt(10);
+                lvAvgGpuP.Width = 0;
+                lvAvgGpuPHeader.IsHitTestVisible = false;
+                lvAvgCpuP.Width = 0;
+                lvAvgCpuPHeader.IsHitTestVisible = false;
+                lvAvgGpuT.Width = 0;
+                lvAvgGpuTHeader.IsHitTestVisible = false;
+                lvAvgCpuT.Width = 0;
+                lvAvgCpuTHeader.IsHitTestVisible = false;
+                lvAvgFps.Width = 0;
+                lvAvgFpsHeader.IsHitTestVisible = false;
+                lvAvgRam.Width = 0;
+                lvAvgRamHeader.IsHitTestVisible = false;
+                lvAvgGpu.Width = 0;
+                lvAvgGpuHeader.IsHitTestVisible = false;
+                lvAvgCpu.Width = 0;
+                lvAvgCpuHeader.IsHitTestVisible = false;
             }
             else
             {
                 if (!PluginDatabase.PluginSettings.Settings.lvAvgGpuP)
                 {
-                    lvView.Columns.RemoveAt(17);
+                    lvAvgGpuP.Width = 0;
+                    lvAvgGpuPHeader.IsHitTestVisible = false;
                 }
                 if (!PluginDatabase.PluginSettings.Settings.lvAvgCpuP)
                 {
-                    lvView.Columns.RemoveAt(16);
+                    lvAvgCpuP.Width = 0;
+                    lvAvgCpuPHeader.IsHitTestVisible = false;
                 }
                 if (!PluginDatabase.PluginSettings.Settings.lvAvgGpuT)
                 {
-                    lvView.Columns.RemoveAt(15);
+                    lvAvgGpuT.Width = 0;
+                    lvAvgGpuTHeader.IsHitTestVisible = false;
                 }
                 if (!PluginDatabase.PluginSettings.Settings.lvAvgCpuT)
                 {
-                    lvView.Columns.RemoveAt(14);
+                    lvAvgCpuT.Width = 0;
+                    lvAvgCpuTHeader.IsHitTestVisible = false;
                 }
                 if (!PluginDatabase.PluginSettings.Settings.lvAvgFps)
                 {
-                    lvView.Columns.RemoveAt(13);
+                    lvAvgFps.Width = 0;
+                    lvAvgFpsHeader.IsHitTestVisible = false;
                 }
                 if (!PluginDatabase.PluginSettings.Settings.lvAvgRam)
                 {
-                    lvView.Columns.RemoveAt(12);
+                    lvAvgRam.Width = 0;
+                    lvAvgRamHeader.IsHitTestVisible = false;
                 }
                 if (!PluginDatabase.PluginSettings.Settings.lvAvgGpu)
                 {
-                    lvView.Columns.RemoveAt(11);
+                    lvAvgGpu.Width = 0;
+                    lvAvgGpuHeader.IsHitTestVisible = false;
                 }
                 if (!PluginDatabase.PluginSettings.Settings.lvAvgCpu)
                 {
-                    lvView.Columns.RemoveAt(10);
+                    lvAvgCpu.Width = 0;
+                    lvAvgCpuHeader.IsHitTestVisible = false;
                 }
             }
 
             if (!PluginDatabase.PluginSettings.Settings.lvGamesPlayAction)
             {
-                lvView.Columns.RemoveAt(9);
+                lvGamesPlayAction.Width = 0;
+                lvGamesPlayActionHeader.IsHitTestVisible = false;
             }
             if (!PluginDatabase.PluginSettings.Settings.lvGamesName)
             {
-                lvView.Columns.RemoveAt(8);
+                lvGamesName.Width = 0;
+                lvGamesNameHeader.IsHitTestVisible = false;
             }
             if (!PluginDatabase.PluginSettings.Settings.lvGamesSource)
             {
-                lvView.Columns.RemoveAt(7);
+                lvGamesSource.Width = 0;
+                lvGamesSourceHeader.IsHitTestVisible = false;
             }
             if (!PluginDatabase.PluginSettings.Settings.lvGamesIcon)
             {
-                lvView.Columns.RemoveAt(0);
+                lvGamesIcon.Width = 0;
+                lvGamesIconHeader.IsHitTestVisible = false;
             }
-
 
             // Graphics game details activities.
             activityForGamesGraphics.Visibility = Visibility.Hidden;
@@ -271,9 +290,8 @@ namespace GameActivity.Views
 
         private void SetSourceFilter()
         {
-            var ListSourceName = activityListByGame.Select(x => x.GameSourceName).Distinct();
-
-            foreach (var sourcename in ListSourceName)
+            IEnumerable<string> ListSourceName = activityListByGame.Select(x => x.GameSourceName).Distinct();
+            foreach (string sourcename in ListSourceName)
             {
                 string Icon = PlayniteTools.GetPlatformIcon(sourcename);
                 string IconText = TransformIcon.Get(sourcename);
@@ -973,12 +991,12 @@ namespace GameActivity.Views
             {
                 if (arrayReturn.Find(x => x.IsEqual(source.Name)) == null)
                 {
-                    arrayReturn.Add(source.Name);
+                    arrayReturn.AddMissing(source.Name);
                 }
             }
             
             // Source for game add manually.
-            arrayReturn.Add("Playnite");
+            arrayReturn.AddMissing("Playnite");
 
             Common.LogDebug(true, Serialization.ToJson(arrayReturn));
             return arrayReturn;
@@ -1000,7 +1018,7 @@ namespace GameActivity.Views
 
             if (sender != null)
             {
-                var item = (ListBox)sender;
+                ListBox item = (ListBox)sender;
                 if (((List<ListActivities>)item.ItemsSource)?.Count > 0)
                 {
                     ListActivities gameItem = (ListActivities)item.SelectedItem;
@@ -1027,7 +1045,7 @@ namespace GameActivity.Views
 
                 if (index != -1 && index < PluginDatabase.LocalSystem.GetConfigurations().Count)
                 {
-                    var Configuration = PluginDatabase.LocalSystem.GetConfigurations()[index];
+                    SystemConfiguration Configuration = PluginDatabase.LocalSystem.GetConfigurations()[index];
 
                     PART_PcName.Content = Configuration.Name;
                     PART_Os.Content = Configuration.Os;
@@ -1301,7 +1319,7 @@ namespace GameActivity.Views
             {
                 int index = (int)chartPoint.X;
                 titleChart = chartPoint.SeriesView.Title;
-                var data = chartPoint.SeriesView.Values;
+                IChartValues data = chartPoint.SeriesView.Values;
 
                 LabelDataSelected = Convert.ToDateTime(((CustomerForTime)data[index]).Name);
 
@@ -1389,6 +1407,16 @@ namespace GameActivity.Views
             Filter();
         }
         #endregion
+
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            Button bt = sender as Button;
+            Game game = API.Instance.Database.Games.Get((Guid)bt.Tag);
+            GameActivityViewSingle ViewExtension = new GameActivityViewSingle(game);
+            Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(API.Instance, resources.GetString("LOCGameActivity"), ViewExtension);
+            windowExtension.ShowDialog();
+        }
     }
 
     public class ListSource
