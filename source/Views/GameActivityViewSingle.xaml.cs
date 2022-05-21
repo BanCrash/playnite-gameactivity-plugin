@@ -151,6 +151,11 @@ namespace GameActivity.Views
                 }
             }
 
+            if (!PluginDatabase.PluginSettings.Settings.lvGamesPcName)
+            {
+                lvGamesPcName.Width = 0;
+                lvGamesPcNameHeader.IsHitTestVisible = false;
+            }
             if (!PluginDatabase.PluginSettings.Settings.lvGamesSource)
             {
                 lvGamesSource.Width = 0;
@@ -354,6 +359,7 @@ namespace GameActivity.Views
                     object GameLastActivity = ((FrameworkElement)sender).Tag;
                     ListActivities activity = ((ObservableCollection<ListActivities>)lvSessions.ItemsSource).Where(x => x.GameLastActivity == (DateTime)GameLastActivity).FirstOrDefault();
 
+                    // Delete playtime
                     if (activity.GameElapsedSeconds != 0)
                     {
                         if ((long)(game.Playtime - activity.GameElapsedSeconds) >= 0)
@@ -371,6 +377,9 @@ namespace GameActivity.Views
                     }
 
                     gameActivities.DeleteActivity(activity.GameLastActivity);
+
+                    // Set last played date
+                    game.LastActivity = (DateTime)gameActivities.Items.Max(x => x.DateSession);
 
                     PluginDatabase.PlayniteApi.Database.Games.Update(game);
                     PluginDatabase.Update(gameActivities);
