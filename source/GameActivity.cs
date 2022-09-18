@@ -1527,34 +1527,37 @@ namespace GameActivity
                 if (type == "cleanPlayniteLibrary") // Set some properties to 0 / null
                 {
                     logger.Info("Cleaning Playnite Library");
-                    foreach (var playniteGame in PlayniteApi.Database.Games)
+                    using (PlayniteApi.Database.BufferedUpdate())
                     {
-                        // Playtime
-                        playniteGame.Playtime = 0;
+                        foreach (var playniteGame in PlayniteApi.Database.Games)
+                        {
+                            // Playtime
+                            playniteGame.Playtime = 0;
 
-                        // LastActivity
-                        playniteGame.LastActivity = null;
+                            // LastActivity
+                            playniteGame.LastActivity = null;
 
-                        // TimesPlayed
-                        playniteGame.PlayCount = 0;
+                            // TimesPlayed
+                            playniteGame.PlayCount = 0;
 
-                        // Completed
-                        playniteGame.CompletionStatusId = Guid.Parse("2609edc1-fb7e-4cf9-ad69-463cc79cb1ef"); // Sin jugar
+                            // Completed
+                            playniteGame.CompletionStatusId = Guid.Parse("2609edc1-fb7e-4cf9-ad69-463cc79cb1ef"); // Sin jugar
 
-                        // Favorite
-                        playniteGame.Favorite = false;
+                            // Favorite
+                            playniteGame.Favorite = false;
 
-                        // Score
-                        playniteGame.UserScore = null;
+                            // Score
+                            playniteGame.UserScore = null;
 
-                        // Notes
-                        playniteGame.Notes = null;
+                            // Notes
+                            playniteGame.Notes = null;
 
-                        PlayniteApi.Database.Games.Update(playniteGame); // Update the game after modificating it
+                            PlayniteApi.Database.Games.Update(playniteGame); // Update the game after modificating it
 
-                        logger.Info($"Cleaned game: {playniteGame.Name} {playniteGame.CompletionStatusId.ToString()}");
+                            logger.Info($"Cleaned game: {playniteGame.Name} {playniteGame.CompletionStatusId.ToString()}");
+                        }
+                        logger.Info("Cleaning Playnite Library finished");
                     }
-                    logger.Info("Cleaning Playnite Library finished");
                 }
                 else if (type == "makeTheImport" || type == "checkDifferences") // Import the library from Lauhdutin to Playnite and/or shows what Lauhdutin games with timesPlayed or price are not present on Playnite Library.
                 {
@@ -1566,266 +1569,269 @@ namespace GameActivity
                     {
                         logger.Info("Checking if Lauhdutin games exist on Playnite Library");
                     }
-                    foreach (LauhdutinGame game in items.games)
+                    using (PlayniteApi.Database.BufferedUpdate())
                     {
-                        // First check if exists TitleOverride. If so, compare this instead the title.
-                        // Titles should be modified manually in Lauhdutin in order to be the same as on Playnite.
-                        // These titles could also be manually added on the LauhdutinToPlayniteTitleConversion method, for bad characters like accents
-                        string title = game.ti;
-                        if (game.tiOv != null)
+                        foreach (LauhdutinGame game in items.games)
                         {
-                            title = LauhdutinToPlayniteTitleConversion(game.tiOv);
-                        }
-
-                        // Also convert the platform for some games that were on another platform on Lauhdutin
-                        game.plID = LauhdutinToPlaynitePlatformConversion(title, game.plID);
-
-                        /* PlatformsIds / PlatformsSource -> Playnite: playniteGame.SourceId.ToString() / Lauhdutin: game.plID
-                        Origin: Playnite "05bd84c8-d051-4226-ae76-5e21e8720c06" Lauhdutin 9
-                        Steam: Playnite "21f997f9-9044-42e7-96b4-41fb85f407ec" Lauhdutin 2
-                        Xbox: "7ed1c0fb-e14f-49bd-973d-887f99519d6f" Lauhdutin 14
-                        Xbox Game Pass: Playnite "72d8c753-6237-4486-86fa-a412c0acd118" Lauhdutin ¿14?
-                        Amazon: Playnite "80a1a4c6-d3ad-4c61-a598-bd152ac6e69f" Lauhdutin 3
-                        Ubisoft Connect: Playnite "80c7e54d-b563-426a-b1ff-b0af75670e42" Lauhdutin 13 
-                        Epic: Playnite "8adf1fb5-3565-4f36-b558-8f9aaf7318d2" Lauhdutin 7
-                        Riot Games: Playnite "8c9e8671-0155-444a-9f08-62326110fd8f" Lauhdutin 11
-                        Battle.net: Playnite "b555a171-d215-4df4-a238-ff9af575c722" Lauhdutin 5 
-                        Humble: Playnite "b90e548e-347f-415c-a061-d7554e1ed9a4" Lauhdutin 8 
-                        GOG: Playnite "cd6abd90-e4df-49d6-af7c-f4c07245197f" Lauhdutin 4
-                        Custom: Playnite IsCustomGame Lauhdutin 16
-
-                        For Shortcuts, is 1 in Lauhdutin and IsCustomGame in Playnite
-                        */
-
-                        string platform;
-                        string platformName;
-                        switch (game.plID)
-                        {
-                            case 1: // Windows shortcut
-                                platform = "";
-                                platformName = "Windows shortcut";
-                                break;
-                            case 2: // Steam
-                                platform = "21f997f9-9044-42e7-96b4-41fb85f407ec";
-                                platformName = "Steam";
-                                break;
-                            case 3: // Amazon
-                                platform = "80a1a4c6-d3ad-4c61-a598-bd152ac6e69f";
-                                platformName = "Amazon";
-                                break;
-                            case 4: // GOG
-                                platform = "cd6abd90-e4df-49d6-af7c-f4c07245197f";
-                                platformName = "GOG";
-                                break;
-                            case 5: // Battle.net
-                                platform = "b555a171-d215-4df4-a238-ff9af575c722";
-                                platformName = "Battle.net";
-                                break;
-                            case 7: // Epic
-                                platform = "8adf1fb5-3565-4f36-b558-8f9aaf7318d2";
-                                platformName = "Epic";
-                                break;
-                            case 8: // Humble
-                                platform = "b90e548e-347f-415c-a061-d7554e1ed9a4";
-                                platformName = "Humble";
-                                break;
-                            case 9: // Origin
-                                platform = "05bd84c8-d051-4226-ae76-5e21e8720c06";
-                                platformName = "Origin";
-                                break;
-                            case 11: // Riot Games
-                                platform = "8c9e8671-0155-444a-9f08-62326110fd8f";
-                                platformName = "Riot Games";
-                                break;
-                            case 13: // Ubisoft Connect
-                                platform = "80c7e54d-b563-426a-b1ff-b0af75670e42";
-                                platformName = "Ubisoft Connect";
-                                break;
-                            case 14: // Xbox
-                                platform = "7ed1c0fb-e14f-49bd-973d-887f99519d6f";
-                                platformName = "Xbox";
-                                break;
-                            case 16: // Custom
-                                if (game.plOv != null)
-                                {
-                                    switch (game.plOv)
-                                    {
-                                        case "Windows shortcut": // Windows shortcut
-                                            platform = "";
-                                            platformName = "Windows shortcut";
-                                            break;
-                                        case "Steam": // Steam
-                                            platform = "21f997f9-9044-42e7-96b4-41fb85f407ec";
-                                            platformName = "Steam";
-                                            break;
-                                        case "Amazon": // Amazon
-                                            platform = "80a1a4c6-d3ad-4c61-a598-bd152ac6e69f";
-                                            platformName = "Amazon";
-                                            break;
-                                        case "GOG": // GOG
-                                            platform = "cd6abd90-e4df-49d6-af7c-f4c07245197f";
-                                            platformName = "GOG";
-                                            break;
-                                        case "Battle.net": // Battle.net
-                                            platform = "b555a171-d215-4df4-a238-ff9af575c722";
-                                            platformName = "Battle.net";
-                                            break;
-                                        case "Epic": // Epic
-                                            platform = "8adf1fb5-3565-4f36-b558-8f9aaf7318d2";
-                                            platformName = "Epic";
-                                            break;
-                                        case "Humble": // Humble
-                                            platform = "b90e548e-347f-415c-a061-d7554e1ed9a4";
-                                            platformName = "Humble";
-                                            break;
-                                        case "Origin": // Origin
-                                            platform = "05bd84c8-d051-4226-ae76-5e21e8720c06";
-                                            platformName = "Origin";
-                                            break;
-                                        case "Riot Games": // Riot Games
-                                            platform = "8c9e8671-0155-444a-9f08-62326110fd8f";
-                                            platformName = "Riot Games";
-                                            break;
-                                        case "Ubisoft Connect": // Ubisoft Connect
-                                            platform = "80c7e54d-b563-426a-b1ff-b0af75670e42";
-                                            platformName = "Ubisoft Connect";
-                                            break;
-                                        case "Xbox": // Xbox
-                                            platform = "7ed1c0fb-e14f-49bd-973d-887f99519d6f";
-                                            platformName = "Xbox";
-                                            break;
-                                        default:
-                                            platform = "";
-                                            platformName = "Custom | " + game.plOv;
-                                            break;
-                                    }
-                                }
-                                else
-                                {
-                                    platform = "";
-                                    platformName = "Custom";
-                                }
-                                break;
-                            default:
-                                platform = "";
-                                platformName = "";
-                                break;
-
-                        }
-
-                        bool isFound = false;
-
-                        foreach (var playniteGame in PlayniteApi.Database.Games)
-                        {
-                            if (playniteGame.Name == title && (playniteGame.SourceId.ToString() == platform || (game.plID == 1 || (game.plID == 16 && platformName == "Custom")) && playniteGame.IsCustomGame))
+                            // First check if exists TitleOverride. If so, compare this instead the title.
+                            // Titles should be modified manually in Lauhdutin in order to be the same as on Playnite.
+                            // These titles could also be manually added on the LauhdutinToPlayniteTitleConversion method, for bad characters like accents
+                            string title = game.ti;
+                            if (game.tiOv != null)
                             {
-                                if (type == "makeTheImport")
+                                title = LauhdutinToPlayniteTitleConversion(game.tiOv);
+                            }
+
+                            // Also convert the platform for some games that were on another platform on Lauhdutin
+                            game.plID = LauhdutinToPlaynitePlatformConversion(title, game.plID);
+
+                            /* PlatformsIds / PlatformsSource -> Playnite: playniteGame.SourceId.ToString() / Lauhdutin: game.plID
+                            Origin: Playnite "05bd84c8-d051-4226-ae76-5e21e8720c06" Lauhdutin 9
+                            Steam: Playnite "21f997f9-9044-42e7-96b4-41fb85f407ec" Lauhdutin 2
+                            Xbox: "7ed1c0fb-e14f-49bd-973d-887f99519d6f" Lauhdutin 14
+                            Xbox Game Pass: Playnite "72d8c753-6237-4486-86fa-a412c0acd118" Lauhdutin ¿14?
+                            Amazon: Playnite "80a1a4c6-d3ad-4c61-a598-bd152ac6e69f" Lauhdutin 3
+                            Ubisoft Connect: Playnite "80c7e54d-b563-426a-b1ff-b0af75670e42" Lauhdutin 13 
+                            Epic: Playnite "8adf1fb5-3565-4f36-b558-8f9aaf7318d2" Lauhdutin 7
+                            Riot Games: Playnite "8c9e8671-0155-444a-9f08-62326110fd8f" Lauhdutin 11
+                            Battle.net: Playnite "b555a171-d215-4df4-a238-ff9af575c722" Lauhdutin 5 
+                            Humble: Playnite "b90e548e-347f-415c-a061-d7554e1ed9a4" Lauhdutin 8 
+                            GOG: Playnite "cd6abd90-e4df-49d6-af7c-f4c07245197f" Lauhdutin 4
+                            Custom: Playnite IsCustomGame Lauhdutin 16
+
+                            For Shortcuts, is 1 in Lauhdutin and IsCustomGame in Playnite
+                            */
+
+                            string platform;
+                            string platformName;
+                            switch (game.plID)
+                            {
+                                case 1: // Windows shortcut
+                                    platform = "";
+                                    platformName = "Windows shortcut";
+                                    break;
+                                case 2: // Steam
+                                    platform = "21f997f9-9044-42e7-96b4-41fb85f407ec";
+                                    platformName = "Steam";
+                                    break;
+                                case 3: // Amazon
+                                    platform = "80a1a4c6-d3ad-4c61-a598-bd152ac6e69f";
+                                    platformName = "Amazon";
+                                    break;
+                                case 4: // GOG
+                                    platform = "cd6abd90-e4df-49d6-af7c-f4c07245197f";
+                                    platformName = "GOG";
+                                    break;
+                                case 5: // Battle.net
+                                    platform = "b555a171-d215-4df4-a238-ff9af575c722";
+                                    platformName = "Battle.net";
+                                    break;
+                                case 7: // Epic
+                                    platform = "8adf1fb5-3565-4f36-b558-8f9aaf7318d2";
+                                    platformName = "Epic";
+                                    break;
+                                case 8: // Humble
+                                    platform = "b90e548e-347f-415c-a061-d7554e1ed9a4";
+                                    platformName = "Humble";
+                                    break;
+                                case 9: // Origin
+                                    platform = "05bd84c8-d051-4226-ae76-5e21e8720c06";
+                                    platformName = "Origin";
+                                    break;
+                                case 11: // Riot Games
+                                    platform = "8c9e8671-0155-444a-9f08-62326110fd8f";
+                                    platformName = "Riot Games";
+                                    break;
+                                case 13: // Ubisoft Connect
+                                    platform = "80c7e54d-b563-426a-b1ff-b0af75670e42";
+                                    platformName = "Ubisoft Connect";
+                                    break;
+                                case 14: // Xbox
+                                    platform = "7ed1c0fb-e14f-49bd-973d-887f99519d6f";
+                                    platformName = "Xbox";
+                                    break;
+                                case 16: // Custom
+                                    if (game.plOv != null)
+                                    {
+                                        switch (game.plOv)
+                                        {
+                                            case "Windows shortcut": // Windows shortcut
+                                                platform = "";
+                                                platformName = "Windows shortcut";
+                                                break;
+                                            case "Steam": // Steam
+                                                platform = "21f997f9-9044-42e7-96b4-41fb85f407ec";
+                                                platformName = "Steam";
+                                                break;
+                                            case "Amazon": // Amazon
+                                                platform = "80a1a4c6-d3ad-4c61-a598-bd152ac6e69f";
+                                                platformName = "Amazon";
+                                                break;
+                                            case "GOG": // GOG
+                                                platform = "cd6abd90-e4df-49d6-af7c-f4c07245197f";
+                                                platformName = "GOG";
+                                                break;
+                                            case "Battle.net": // Battle.net
+                                                platform = "b555a171-d215-4df4-a238-ff9af575c722";
+                                                platformName = "Battle.net";
+                                                break;
+                                            case "Epic": // Epic
+                                                platform = "8adf1fb5-3565-4f36-b558-8f9aaf7318d2";
+                                                platformName = "Epic";
+                                                break;
+                                            case "Humble": // Humble
+                                                platform = "b90e548e-347f-415c-a061-d7554e1ed9a4";
+                                                platformName = "Humble";
+                                                break;
+                                            case "Origin": // Origin
+                                                platform = "05bd84c8-d051-4226-ae76-5e21e8720c06";
+                                                platformName = "Origin";
+                                                break;
+                                            case "Riot Games": // Riot Games
+                                                platform = "8c9e8671-0155-444a-9f08-62326110fd8f";
+                                                platformName = "Riot Games";
+                                                break;
+                                            case "Ubisoft Connect": // Ubisoft Connect
+                                                platform = "80c7e54d-b563-426a-b1ff-b0af75670e42";
+                                                platformName = "Ubisoft Connect";
+                                                break;
+                                            case "Xbox": // Xbox
+                                                platform = "7ed1c0fb-e14f-49bd-973d-887f99519d6f";
+                                                platformName = "Xbox";
+                                                break;
+                                            default:
+                                                platform = "";
+                                                platformName = "Custom | " + game.plOv;
+                                                break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        platform = "";
+                                        platformName = "Custom";
+                                    }
+                                    break;
+                                default:
+                                    platform = "";
+                                    platformName = "";
+                                    break;
+
+                            }
+
+                            bool isFound = false;
+
+                            foreach (var playniteGame in PlayniteApi.Database.Games)
+                            {
+                                if (playniteGame.Name == title && (playniteGame.SourceId.ToString() == platform || (game.plID == 1 || (game.plID == 16 && platformName == "Custom")) && playniteGame.IsCustomGame))
                                 {
-                                    // Hidden
-                                    if (game.hi)
+                                    if (type == "makeTheImport")
                                     {
-                                        playniteGame.Hidden = game.hi;
-                                    }
-
-                                    // Favorite
-                                    if (game.fa)
-                                    {
-                                        playniteGame.Favorite = game.fa;
-                                    }
-
-                                    // Notes
-                                    if (game.no != null)
-                                    {
-                                        playniteGame.Notes = game.no;
-                                    }
-
-                                    // Score
-                                    if (game.sc != null)
-                                    {
-                                        playniteGame.UserScore = game.sc * 10;
-                                    }
-
-                                    // Just add these stats if there is timesPlayed or hoursPlayed
-                                    if (game.tiPl > 0 || game.hoPl > 0)
-                                    {
-                                        // Playtime
-                                        // Convert double hoursPlayed to ulong secondsPlayed
-                                        TimeSpan hoursPlayed = TimeSpan.FromHours(game.hoPl);
-                                        ulong secondsPlayed = Convert.ToUInt64(hoursPlayed.TotalSeconds);
-                                        playniteGame.Playtime = secondsPlayed;
-
-                                        // LastActivity
-                                        // Convert double datePlayed to DateTime datePlayed
-                                        if (game.laPl != 0)
+                                        // Hidden
+                                        if (game.hi)
                                         {
-                                            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(game.laPl);
-                                            DateTime lastActivity = dateTimeOffset.DateTime.ToLocalTime().ToUniversalTime();
-                                            playniteGame.LastActivity = lastActivity;
-                                        }
-                                        else
-                                        {
-                                            playniteGame.LastActivity = null;
+                                            playniteGame.Hidden = game.hi;
                                         }
 
-                                        // TimesPlayed
-                                        if (game.tiPl > 0)
+                                        // Favorite
+                                        if (game.fa)
                                         {
-                                            playniteGame.PlayCount = game.tiPl;
+                                            playniteGame.Favorite = game.fa;
                                         }
 
-                                        // Completed
-                                        if (game.co)
+                                        // Notes
+                                        if (game.no != null)
                                         {
-                                            playniteGame.CompletionStatusId = Guid.Parse("f4000eca-c4aa-4677-b2b6-f891caa2c13f"); // Completado
-                                        }
-                                        else
-                                        {
-                                            playniteGame.CompletionStatusId = Guid.Parse("169e24a0-5b40-40cb-a46c-039d79d71cd4"); // Jugado
+                                            playniteGame.Notes = game.no;
                                         }
 
-
-                                        // Stats
-                                        // Do the same conversions on stats
-                                        if (game.st != null)
+                                        // Score
+                                        if (game.sc != null)
                                         {
-                                            // Stats format: "i": { hoPl = hoursPlayed, daPl = datePlayed }
-                                            foreach (KeyValuePair<string, LauhdutinGameStats> stat in game.st)
+                                            playniteGame.UserScore = game.sc * 10;
+                                        }
+
+                                        // Just add these stats if there is timesPlayed or hoursPlayed
+                                        if (game.tiPl > 0 || game.hoPl > 0)
+                                        {
+                                            // Playtime
+                                            // Convert double hoursPlayed to ulong secondsPlayed
+                                            TimeSpan hoursPlayed = TimeSpan.FromHours(game.hoPl);
+                                            ulong secondsPlayed = Convert.ToUInt64(hoursPlayed.TotalSeconds);
+                                            playniteGame.Playtime = secondsPlayed;
+
+                                            // LastActivity
+                                            // Convert double datePlayed to DateTime datePlayed
+                                            if (game.laPl != 0)
                                             {
-                                                if (stat.Value.hoPl > 0)
-                                                {
-                                                    // Hours to seconds
-                                                    TimeSpan stHoursPlayed = TimeSpan.FromHours(stat.Value.hoPl);
-                                                    ulong stSecondsPlayed = Convert.ToUInt64(stHoursPlayed.TotalSeconds);
-
-                                                    // Epoch to DateTime
-                                                    DateTimeOffset stDateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(stat.Value.daPl);
-                                                    DateTime stLastActivity = stDateTimeOffset.DateTime.ToLocalTime().ToUniversalTime();
-
-                                                    // Create the activity based on the stat
-                                                    CreateNewGameActivity(playniteGame, stLastActivity, stSecondsPlayed, platformName);
-                                                }
-                                                else
-                                                {
-                                                    logger.Debug($"Game {title} have a faulty stat: {stat.Key}");
-                                                }
+                                                DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(game.laPl);
+                                                DateTime lastActivity = dateTimeOffset.DateTime.ToLocalTime().ToUniversalTime();
+                                                playniteGame.LastActivity = lastActivity;
+                                            }
+                                            else
+                                            {
+                                                playniteGame.LastActivity = null;
                                             }
 
-                                        }
-                                        else
-                                        {
-                                            logger.Debug($"{title} doesn't have stats");
-                                        }
-                                    }
-                                    PlayniteApi.Database.Games.Update(playniteGame); // Update the game after modificating it
-                                }
-                                isFound = true;
-                                break; // End with this game since is already found on Playnite
-                            }
-                        }
+                                            // TimesPlayed
+                                            if (game.tiPl > 0)
+                                            {
+                                                playniteGame.PlayCount = game.tiPl;
+                                            }
 
-                        if (!isFound && (game.tiPl > 0 || game.pri != null || game.hoPl > 0))
-                        {
-                            logger.Info($"Game {title} of platform {platformName} not found on Playnite database");
+                                            // Completed
+                                            if (game.co)
+                                            {
+                                                playniteGame.CompletionStatusId = Guid.Parse("f4000eca-c4aa-4677-b2b6-f891caa2c13f"); // Completado
+                                            }
+                                            else
+                                            {
+                                                playniteGame.CompletionStatusId = Guid.Parse("169e24a0-5b40-40cb-a46c-039d79d71cd4"); // Jugado
+                                            }
+
+
+                                            // Stats
+                                            // Do the same conversions on stats
+                                            if (game.st != null)
+                                            {
+                                                // Stats format: "i": { hoPl = hoursPlayed, daPl = datePlayed }
+                                                foreach (KeyValuePair<string, LauhdutinGameStats> stat in game.st)
+                                                {
+                                                    if (stat.Value.hoPl > 0)
+                                                    {
+                                                        // Hours to seconds
+                                                        TimeSpan stHoursPlayed = TimeSpan.FromHours(stat.Value.hoPl);
+                                                        ulong stSecondsPlayed = Convert.ToUInt64(stHoursPlayed.TotalSeconds);
+
+                                                        // Epoch to DateTime
+                                                        DateTimeOffset stDateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(stat.Value.daPl);
+                                                        DateTime stLastActivity = stDateTimeOffset.DateTime.ToLocalTime().ToUniversalTime();
+
+                                                        // Create the activity based on the stat
+                                                        CreateNewGameActivity(playniteGame, stLastActivity, stSecondsPlayed, platformName);
+                                                    }
+                                                    else
+                                                    {
+                                                        logger.Debug($"Game {title} have a faulty stat: {stat.Key}");
+                                                    }
+                                                }
+
+                                            }
+                                            else
+                                            {
+                                                logger.Debug($"{title} doesn't have stats");
+                                            }
+                                        }
+                                        PlayniteApi.Database.Games.Update(playniteGame); // Update the game after modificating it
+                                    }
+                                    isFound = true;
+                                    break; // End with this game since is already found on Playnite
+                                }
+                            }
+
+                            if (!isFound && (game.tiPl > 0 || game.pri != null || game.hoPl > 0))
+                            {
+                                logger.Info($"Game {title} of platform {platformName} not found on Playnite database");
+                            }
                         }
                     }
                 }
