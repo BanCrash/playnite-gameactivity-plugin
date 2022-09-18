@@ -1484,10 +1484,94 @@ namespace GameActivity
         }
 
         // This method is copied from OnGameStarted and OnGameStopped adapted for the importing scenario
-        public void CreateNewGameActivity(Game game, DateTime DateSession, ulong ElapsedSeconds, string platformName)
+        public void CreateNewGameActivity(Game game, DateTime DateSession, ulong ElapsedSeconds, string platformName, int statNumber)
         {
             try
             {
+                var gameActionName = platformName == "Riot Games" || platformName == "Windows shortcut" ? "Jugar" : resources.GetString("LOCGameActivityDefaultAction");
+                if (game.Name == "A Way Out")
+                {
+                    if (statNumber <= 5)
+                    {
+                        gameActionName = "Con Alberto";
+                    }
+                    else
+                    {
+                        gameActionName = "Con Ruuuben";
+                    }
+                }
+                else if (game.Name == "Crash Bandicoot N. Sane Trilogy")
+                {
+                    if (statNumber <= 18)
+                    {
+                        gameActionName = "Crash Bandicoot";
+                    }
+                    else if (statNumber > 18 && statNumber <= 36)
+                    {
+                        gameActionName = "Crash Bandicoot 2: Cortex Strikes Back";
+                    }
+                    else
+                    {
+                        gameActionName = "Crash Bandicoot 3: Warped";
+                    }
+                }
+                else if (game.Name == "Cuphead")
+                {
+                    if (statNumber <= 31)
+                    {
+                        gameActionName = "Juego base";
+                    }
+                    else
+                    {
+                        gameActionName = "The Delicious Last Course";
+                    }
+                }
+                else if (game.Name == "It Takes Two")
+                {
+                    gameActionName = "Con Ruuuben";
+                }
+                else if (game.Name == "Phoenix Wright: Ace Attorney Trilogy")
+                {
+                    if (statNumber <= 40)
+                    {
+                        gameActionName = "Phoenix Wright: Ace Attorney";
+                    }
+                    else if (statNumber > 40 && statNumber <= 68)
+                    {
+                        gameActionName = "Phoenix Wright: Ace Attorney: Justice for All";
+                    }
+                    else
+                    {
+                        gameActionName = "Phoenix Wright: Ace Attorney: Trials and Tribulations";
+                    }
+                }
+                else if (game.Name == "Spyro Reignited Trilogy")
+                {
+                    if (statNumber <= 17)
+                    {
+                        gameActionName = "Spyro the Dragon";
+                    }
+                    else if (statNumber > 17 && statNumber <= 39)
+                    {
+                        gameActionName = "Spyro 2: En busca de los talismanes";
+                    }
+                    else
+                    {
+                        gameActionName = "Spyro 3: El año del dragón";
+                    }
+                }
+                else if (game.Name == "VALORANT")
+                {
+                    if (statNumber <= 46)
+                    {
+                        gameActionName = "Beta cerrada";
+                    }
+                    else
+                    {
+                        gameActionName = "Version publica";
+                    }
+                }
+
                 RunningActivity runningActivity = new RunningActivity();
                 runningActivity.Id = game.Id;
                 runningActivity.PlaytimeOnStarted = game.Playtime;
@@ -1498,7 +1582,7 @@ namespace GameActivity
                 runningActivity.GameActivitiesLog.Items.Add(new Activity
                 {
                     IdConfiguration = PluginDatabase?.LocalSystem?.GetIdConfiguration() ?? -1,
-                    GameActionName = platformName == "Riot Games" || platformName == "Windows shortcut" ? "Jugar" : resources.GetString("LOCGameActivityDefaultAction"),
+                    GameActionName = gameActionName,
                     DateSession = DateSession,
                     SourceID = game.SourceId == null ? default : game.SourceId,
                     PlatformIDs = game.PlatformIds ?? new List<Guid>(),
@@ -1807,7 +1891,7 @@ namespace GameActivity
                                                         DateTime stLastActivity = stDateTimeOffset.DateTime.ToLocalTime().ToUniversalTime();
 
                                                         // Create the activity based on the stat
-                                                        CreateNewGameActivity(playniteGame, stLastActivity, stSecondsPlayed, platformName);
+                                                        CreateNewGameActivity(playniteGame, stLastActivity, stSecondsPlayed, platformName, Convert.ToInt32(stat.Key));
                                                     }
                                                     else
                                                     {
