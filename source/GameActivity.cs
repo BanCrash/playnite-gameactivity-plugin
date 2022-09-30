@@ -42,16 +42,8 @@ namespace GameActivity
 
         private List<RunningActivity> runningActivities = new List<RunningActivity>();
 
-        private GameActivities gameActivities;
-
-        //private OldToNew oldToNew;
-
-
         public GameActivity(IPlayniteAPI api) : base(api)
         {
-            // Old database            
-            //oldToNew = new OldToNew(this.GetPluginUserDataPath());
-
             // Custom theme button
             EventManager.RegisterClassHandler(typeof(Button), Button.ClickEvent, new RoutedEventHandler(OnCustomThemeButtonClick));
 
@@ -67,55 +59,6 @@ namespace GameActivity
             {
                 SourceName = "GameActivity",
                 SettingsRoot = $"{nameof(PluginSettings)}.{nameof(PluginSettings.Settings)}"
-            });
-
-            // Remove duplicate
-            Task.Run(() =>
-            {
-                if (!PluginSettings.Settings.HasRemovingDuplicate)
-                {
-                    System.Threading.SpinWait.SpinUntil(() => PluginDatabase.IsLoaded, -1);
-
-                    GlobalProgressOptions globalProgressOptions = new GlobalProgressOptions(
-                        $"GameActivity - Database updating...",
-                        false
-                    );
-                    globalProgressOptions.IsIndeterminate = false;
-
-                    PlayniteApi.Dialogs.ActivateGlobalProgress((activateGlobalProgress) =>
-                    {
-                        activateGlobalProgress.ProgressMaxValue = PluginDatabase.Database.Count;
-
-                        foreach (GameActivities gameActivities in PluginDatabase.Database)
-                        {
-                            Thread.Sleep(10);
-                            try
-                            {
-                                double countBefore = gameActivities.Items.Count();
-                                gameActivities.Items = gameActivities.Items.DistinctBy(x => new { x.DateSession, x.ElapsedSeconds }).ToList();
-                                double countAfter = gameActivities.Items.Count();
-
-                                if (countBefore > countAfter)
-                                {
-                                    logger.Warn($"Duplicate items ({countBefore - countAfter}) in {gameActivities.Name}");
-                                    PluginDatabase.Update(gameActivities);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Common.LogError(ex, false, true, PluginDatabase.PluginName);
-                            }
-
-                            activateGlobalProgress.CurrentProgressValue++;
-                        }
-
-                        PluginSettings.Settings.HasRemovingDuplicate = true;
-                        Application.Current.Dispatcher.BeginInvoke((Action)delegate
-                        {
-                            this.SavePluginSettings(PluginSettings.Settings);
-                        });
-                    }, globalProgressOptions);
-                }
             });
 
             // Initialize top & side bar
@@ -141,7 +84,7 @@ namespace GameActivity
                             Height = 740
                         };
 
-                        GameActivityView ViewExtension = new GameActivityView();
+                        GameActivityView ViewExtension = new GameActivityView(this);
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGamesActivitiesTitle"), ViewExtension, windowOptions);
                         windowExtension.ResizeMode = ResizeMode.CanResize;
                         windowExtension.ShowDialog();
@@ -157,10 +100,9 @@ namespace GameActivity
         #region Custom event
         public void OnCustomThemeButtonClick(object sender, RoutedEventArgs e)
         {
-            string ButtonName = string.Empty;
             try
             {
-                ButtonName = ((Button)sender).Name;
+                string ButtonName = ((Button)sender).Name;
                 if (ButtonName == "PART_CustomGameActivityButton")
                 {
                     Common.LogDebug(true, $"OnCustomThemeButtonClick()");
@@ -174,7 +116,7 @@ namespace GameActivity
                         Height = 740
                     };
 
-                    GameActivityViewSingle ViewExtension = new GameActivityViewSingle(PluginDatabase.GameContext);
+                    GameActivityViewSingle ViewExtension = new GameActivityViewSingle(this, PluginDatabase.GameContext);
                     Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGameActivity"), ViewExtension, windowOptions);
                     windowExtension.ResizeMode = ResizeMode.CanResize;
                     windowExtension.ShowDialog();
@@ -276,7 +218,7 @@ namespace GameActivity
         /// </summary>
         public void DataLogging_start(Guid Id)
         {
-            logger.Info($"DataLogging_start - {Id}");            
+            logger.Info($"DataLogging_start - {Id}");
             RunningActivity runningActivity = runningActivities.Find(x => x.Id == Id);
 
             runningActivity.timer = new System.Timers.Timer(PluginSettings.Settings.TimeIntervalLogging * 60000);
@@ -608,7 +550,7 @@ namespace GameActivity
             runningActivity.timerBackup = new System.Timers.Timer(PluginSettings.Settings.TimeIntervalLogging * 60000);
             runningActivity.timerBackup.AutoReset = true;
             runningActivity.timerBackup.Elapsed += (sender, e) => OnTimedBackupEvent(sender, e, Id);
-            runningActivity.timerBackup.Start();            
+            runningActivity.timerBackup.Start();
         }
 
         public void DataBackup_stop(Guid Id)
@@ -659,7 +601,7 @@ namespace GameActivity
         {
             if (args.Name == "PluginButton")
             {
-                return new PluginButton();
+                return new PluginButton(this);
             }
 
             if (args.Name == "PluginChartTime")
@@ -671,7 +613,7 @@ namespace GameActivity
             {
                 return new PluginChartLog { DisableAnimations = true, LabelsRotation = true };
             }
-             
+
             return null;
         }
 
@@ -691,7 +633,7 @@ namespace GameActivity
                 {
                     SidebarItemControl sidebarItemControl = new SidebarItemControl(PluginDatabase.PlayniteApi);
                     sidebarItemControl.SetTitle(resources.GetString("LOCGamesActivitiesTitle"));
-                    sidebarItemControl.AddContent(new GameActivityView());
+                    sidebarItemControl.AddContent(new GameActivityView(plugin));
 
                     return sidebarItemControl;
                 };
@@ -725,7 +667,7 @@ namespace GameActivity
                     Description = resources.GetString("LOCGameActivityViewGameActivity"),
                     Action = (gameMenuItem) =>
                     {
-                        GameActivityViewSingle ViewExtension = new GameActivityViewSingle(GameMenu);
+                        GameActivityViewSingle ViewExtension = new GameActivityViewSingle(this, GameMenu);
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGameActivity"), ViewExtension);
                         windowExtension.ShowDialog();
                     }
@@ -737,7 +679,7 @@ namespace GameActivity
             {
                 MenuSection = resources.GetString("LOCGameActivity"),
                 Description = "Test",
-                Action = (mainMenuItem) => 
+                Action = (mainMenuItem) =>
                 {
 
                 }
@@ -774,7 +716,7 @@ namespace GameActivity
                             Height = 740
                         };
 
-                        GameActivityView ViewExtension = new GameActivityView();
+                        GameActivityView ViewExtension = new GameActivityView(this);
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGamesActivitiesTitle"), ViewExtension, windowOptions);
                         windowExtension.ResizeMode = ResizeMode.CanResize;
                         windowExtension.ShowDialog();
@@ -994,39 +936,6 @@ namespace GameActivity
         #region Game event
         public override void OnGameSelected(OnGameSelectedEventArgs args)
         {
-            // Old database
-            //if (oldToNew.IsOld)
-            //{
-            //    oldToNew.ConvertDB(PlayniteApi);
-            //}
-
-                       
-            // Old format
-            //var oldFormat = PluginDatabase.Database?.Select(x => x).Where(x => x.Items.FirstOrDefault() != null && x.Items.FirstOrDefault().PlatformIDs == null);
-            var oldFormat = PluginDatabase.Database?.Select(x => x).Where(x => x.Items.Where(y => y.PlatformID != default(Guid)).Count() > 0);
-            if (oldFormat?.Count() > 0)
-            {
-                GlobalProgressOptions globalProgressOptions = new GlobalProgressOptions(
-                    "GameActivity - Database migration",
-                    false
-                );
-                globalProgressOptions.IsIndeterminate = true;
-
-                PlayniteApi.Dialogs.ActivateGlobalProgress((activateGlobalProgress) =>
-                {
-                    foreach (GameActivities gameActivities in PluginDatabase.Database)
-                    {
-                        foreach(Activity activity in gameActivities.Items)
-                        {
-                            activity.PlatformIDs = new List<Guid> { activity.PlatformID };
-                            activity.PlatformID = default(Guid);
-                        }
-
-                        PluginDatabase.AddOrUpdate(gameActivities);
-                    }
-                }, globalProgressOptions);
-            }
-
             try
             {
                 if (args.NewValue?.Count == 1 && PluginDatabase.IsLoaded)
@@ -1039,7 +948,6 @@ namespace GameActivity
                     Task.Run(() =>
                     {
                         System.Threading.SpinWait.SpinUntil(() => PluginDatabase.IsLoaded, -1);
-
                         Application.Current.Dispatcher.BeginInvoke((Action)delegate
                         {
                             if (args.NewValue?.Count == 1)
@@ -1147,6 +1055,11 @@ namespace GameActivity
                         DataLogging_stop(args.Game.Id);
                     }
 
+                    if (runningActivity == null)
+                    {
+                        return;
+                    }
+
                     ulong ElapsedSeconds = args.ElapsedSeconds;
                     if (ElapsedSeconds == 0)
                     {
@@ -1202,14 +1115,7 @@ namespace GameActivity
             // PlayState will write the Id and pausedTime to PlayState.txt file placed inside ExtensionsData Roaming Playnite folder
             // Check first if this file exists and if not return false to avoid executing unnecessary code.
             string PlayStateFile = Path.Combine(PlayniteApi.Paths.ExtensionsDataPath, "PlayState.txt");
-            if (File.Exists(PlayStateFile))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return File.Exists(PlayStateFile);
         }
 
         private ulong GetPlayStatePausedTimeInfo(Game game) // Temporary workaround for PlayState paused time until Playnite allows to share data among extensions
@@ -1243,14 +1149,7 @@ namespace GameActivity
             File.WriteAllLines(PlayStateFile, Info);
 
             // Check that the GameId is the same as the paused game. If so, return the paused time. If not, return 0.
-            if (game.Id.ToString() == Id)
-            {
-                return PausedSeconds;
-            }
-            else
-            {
-                return 0;
-            }
+            return game.Id.ToString() == Id ? PausedSeconds : 0;
         }
         #endregion
 
@@ -1259,7 +1158,7 @@ namespace GameActivity
         // Add code to be executed when Playnite is initialized.
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
         {
-            // CheckGoodForLogging 
+            // CheckGoodForLogging
             Task.Run(() =>
             {
                 Common.LogDebug(true, "CheckGoodForLogging_1");
@@ -1357,14 +1256,14 @@ namespace GameActivity
         // Add code to be executed when Playnite is shutting down.
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
         {
-            
+
         }
         #endregion
 
         // Add code to be executed when library is updated.
         public override void OnLibraryUpdated(OnLibraryUpdatedEventArgs args)
         {
-            
+
         }
 
         #region Settings
@@ -1675,11 +1574,11 @@ namespace GameActivity
                             Xbox: "7ed1c0fb-e14f-49bd-973d-887f99519d6f" Lauhdutin 14
                             Xbox Game Pass: Playnite "72d8c753-6237-4486-86fa-a412c0acd118" Lauhdutin ¿14?
                             Amazon: Playnite "80a1a4c6-d3ad-4c61-a598-bd152ac6e69f" Lauhdutin 3
-                            Ubisoft Connect: Playnite "80c7e54d-b563-426a-b1ff-b0af75670e42" Lauhdutin 13 
+                            Ubisoft Connect: Playnite "80c7e54d-b563-426a-b1ff-b0af75670e42" Lauhdutin 13
                             Epic: Playnite "8adf1fb5-3565-4f36-b558-8f9aaf7318d2" Lauhdutin 7
                             Riot Games: Playnite "8c9e8671-0155-444a-9f08-62326110fd8f" Lauhdutin 11
-                            Battle.net: Playnite "b555a171-d215-4df4-a238-ff9af575c722" Lauhdutin 5 
-                            Humble: Playnite "b90e548e-347f-415c-a061-d7554e1ed9a4" Lauhdutin 8 
+                            Battle.net: Playnite "b555a171-d215-4df4-a238-ff9af575c722" Lauhdutin 5
+                            Humble: Playnite "b90e548e-347f-415c-a061-d7554e1ed9a4" Lauhdutin 8
                             GOG: Playnite "cd6abd90-e4df-49d6-af7c-f4c07245197f" Lauhdutin 4
                             Custom: Playnite IsCustomGame Lauhdutin 16
 

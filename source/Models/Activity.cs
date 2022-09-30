@@ -15,8 +15,6 @@ namespace GameActivity.Models
         private ActivityDatabase PluginDatabase = GameActivity.PluginDatabase;
 
         public Guid SourceID { get; set; }
-        // TODO Must deleted
-        public Guid PlatformID { get; set; }
         public List<Guid> PlatformIDs { get; set; }
 
         [SerializationPropertyName("GameActionName")]
@@ -43,7 +41,7 @@ namespace GameActivity.Models
                     return new SystemConfiguration();
                 }
 
-                if (IdConfiguration >= PluginDatabase.LocalSystem.GetConfigurations().Count)
+                if (IdConfiguration >= (PluginDatabase.LocalSystem.GetConfigurations()?.Count ?? 0))
                 {
                     return new SystemConfiguration();
                 }

@@ -7,6 +7,7 @@ using System;
 using Playnite.SDK.Models;
 using System.Windows.Media;
 using MoreLinq;
+using CommonPluginsShared.Extensions;
 
 namespace GameActivity
 {
@@ -14,7 +15,6 @@ namespace GameActivity
     {
         #region Settings variables
         public bool MenuInExtensions { get; set; } = true;
-        public bool HasRemovingDuplicate { get; set; } = false;
 
         public bool SaveColumnOrder { get; set; } = false;
 
@@ -139,6 +139,9 @@ namespace GameActivity
 
         public int VariatorTime { get; set; } = 7;
         public int VariatorLog { get; set; } = 4;
+
+
+        public Dictionary<Guid, List<string>> CustomGameActions = new Dictionary<Guid, List<string>>();
         #endregion
 
         // Playnite serializes settings object to a JSON object and saves it as text file.
@@ -227,15 +230,7 @@ namespace GameActivity
         private GameActivitySettings EditingClone { get; set; }
 
         private GameActivitySettings _Settings;
-        public GameActivitySettings Settings
-        {
-            get => _Settings;
-            set
-            {
-                _Settings = value;
-                OnPropertyChanged();
-            }
-        }
+        public GameActivitySettings Settings { get => _Settings; set => SetValue(ref _Settings, value); }
 
 
         public GameActivitySettingsViewModel(GameActivity plugin)
@@ -244,17 +239,10 @@ namespace GameActivity
             Plugin = plugin;
 
             // Load saved settings.
-            var savedSettings = plugin.LoadPluginSettings<GameActivitySettings>();
+            GameActivitySettings savedSettings = plugin.LoadPluginSettings<GameActivitySettings>();
 
             // LoadPluginSettings returns null if not saved data is available.
-            if (savedSettings != null)
-            {
-                Settings = savedSettings;
-            }
-            else
-            {
-                Settings = new GameActivitySettings();
-            }
+            Settings = savedSettings ?? new GameActivitySettings();
         }
 
         // Code executed when settings view is opened and user starts editing values.
@@ -288,7 +276,7 @@ namespace GameActivity
                 {
                     logger.Warn($"No name for SourceId {Id}");
                 }
-                Name = (Name == "PC (Windows)" || Name == "PC (Mac)" || Name == "PC (Linux)") ? "Playnite" : Name;
+                Name = (Name.IsEqual("PC (Windows)") || Name.IsEqual("PC (Mac)") || Name.IsEqual("PC (Linux)")) ? "Playnite" : Name;
 
                 if (Settings.StoreColors.FindAll(x => x.Name.Equals(Name)) == null)
                 {
@@ -304,7 +292,7 @@ namespace GameActivity
             foreach (Platform platform in PlatformIds)
             {
                 string Name = platform.Name;
-                Name = (Name == "PC (Windows)" || Name == "PC (Mac)" || Name == "PC (Linux)") ? "Playnite" : Name;
+                Name = (Name.IsEqual("PC (Windows)") || Name.IsEqual("PC (Mac)") || Name.IsEqual("PC (Linux)")) ? "Playnite" : Name;
 
                 if (Settings.StoreColors.FindAll(x => x.Name.Equals(Name)) == null)
                 {
