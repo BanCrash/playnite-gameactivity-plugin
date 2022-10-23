@@ -1425,9 +1425,17 @@ namespace GameActivity
                         gameActionName = "The Delicious Last Course";
                     }
                 }
+                else if (game.Name == "F1 22")
+                {
+                    gameActionName = "Finde gratis";
+                }
                 else if (game.Name == "It Takes Two")
                 {
                     gameActionName = "Con Ruuuben";
+                }
+                else if (game.Name == "Overwatch")
+                {
+                    gameActionName = "Overwatch 1";
                 }
                 else if (game.Name == "Phoenix Wright: Ace Attorney Trilogy")
                 {
@@ -1458,6 +1466,10 @@ namespace GameActivity
                     {
                         gameActionName = "Spyro 3: El año del dragón";
                     }
+                }
+                else if (game.Name == "State of Decay 2")
+                {
+                    gameActionName = "Con Alberto";
                 }
                 else if (game.Name == "VALORANT")
                 {
