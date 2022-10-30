@@ -46,12 +46,12 @@ namespace GameActivity.Views
             PART_ElapseTime.Content = "--";
 
             List<string> listCb = game.GameActions?.Select(x => x.Name.IsNullOrEmpty() ? resources.GetString("LOCGameActivityDefaultAction") : x.Name)?.ToList() ?? new List<string> { ResourceProvider.GetString("LOCGameActivityDefaultAction") };
-            PluginDatabase.PluginSettings.Settings.CustomGameActions.TryGetValue(game.Id, out List<string> listCbCustom);
+            PluginDatabase.PluginSettings.Settings.CustomGameActions.TryGetValue(game.Id, out List<CustomGameActions> listCbCustom);
 
             cbListHeaders = listCb.Select(x => new CbListHeader { Name = x, Category = resources.GetString("LOCGaGameActions") }).ToList();
             if (listCbCustom != null) 
             {
-                List<CbListHeader> tmp = listCbCustom.Select(x => new CbListHeader { Name = x, Category = resources.GetString("LOCGaCustomGameActions"), IsCustom = true }).ToList();
+                List<CbListHeader> tmp = listCbCustom.Select(x => new CbListHeader { Name = x.Name, Category = resources.GetString("LOCGaCustomGameActions"), IsCustom = true }).ToList();
                 cbListHeaders = cbListHeaders.Concat(tmp).ToList();
             }
 
@@ -178,12 +178,12 @@ namespace GameActivity.Views
                 PART_CbPlayAction.ItemsSource = lcv;
 
                 // Save in settings
-                PluginDatabase.PluginSettings.Settings.CustomGameActions.TryGetValue(game.Id, out List<string> listCbCustom);
+                PluginDatabase.PluginSettings.Settings.CustomGameActions.TryGetValue(game.Id, out List<CustomGameActions> listCbCustom);
                 if (listCbCustom == null)
                 {
-                    listCbCustom = new List<string>();
+                    listCbCustom = new List<CustomGameActions>();
                 }
-                listCbCustom.Add(PART_PlayActionLabel.Text);
+                listCbCustom.Add(new CustomGameActions(PART_PlayActionLabel.Text));
                 PluginDatabase.PluginSettings.Settings.CustomGameActions[game.Id] = listCbCustom;
                 plugin.SavePluginSettings(PluginDatabase.PluginSettings.Settings);
 
@@ -208,12 +208,13 @@ namespace GameActivity.Views
                 PART_CbPlayAction.ItemsSource = lcv;
 
                 // Save in settings
-                PluginDatabase.PluginSettings.Settings.CustomGameActions.TryGetValue(game.Id, out List<string> listCbCustom);
+                PluginDatabase.PluginSettings.Settings.CustomGameActions.TryGetValue(game.Id, out List<CustomGameActions> listCbCustom);
                 if (listCbCustom == null)
                 {
-                    listCbCustom = new List<string>();
+                    listCbCustom = new List<CustomGameActions>();
                 }
-                listCbCustom.Remove(finded.Name);
+                var findedItem = listCbCustom.SingleOrDefault(x => x.Name == finded.Name);
+                listCbCustom.Remove(findedItem);
                 PluginDatabase.PluginSettings.Settings.CustomGameActions[game.Id] = listCbCustom;
                 plugin.SavePluginSettings(PluginDatabase.PluginSettings.Settings);
             }

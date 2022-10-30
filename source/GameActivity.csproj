@@ -150,6 +150,7 @@
     <Compile Include="GameActivity.cs" />
     <Compile Include="GameActivitySettings.cs" />
     <Compile Include="Models\ActivityBackup.cs" />
+    <Compile Include="Models\CustomGameActions.cs" />
     <Compile Include="Models\ExportedData.cs" />
     <Compile Include="Models\GameActivities.cs" />
     <Compile Include="Models\GameActivitiesCollection.cs" />
@@ -465,6 +466,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\command-line.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\tick.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

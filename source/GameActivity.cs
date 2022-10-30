@@ -672,6 +672,86 @@ namespace GameActivity
                 }
             };
 
+            // Default play action menu
+
+            List<string> listCb = GameMenu.GameActions?.Select(x => x.Name.IsNullOrEmpty() ? resources.GetString("LOCGameActivityDefaultAction") : x.Name)?.ToList() ?? new List<string> { ResourceProvider.GetString("LOCGameActivityDefaultAction") };
+            if (!listCb.Any(x => x == resources.GetString("LOCGameActivityDefaultAction")))
+            {
+                listCb.Insert(0, resources.GetString("LOCGameActivityDefaultAction"));
+            }
+            PluginDatabase.PluginSettings.Settings.CustomGameActions.TryGetValue(GameMenu.Id, out List<CustomGameActions> listCbCustom);
+
+            var playActions = listCb.Select(x => new CbListHeader { Name = x, Category = resources.GetString("LOCGaGameActions") }).ToList();
+
+            List<CbListHeader> cbListHeaders = new List<CbListHeader>();
+
+            if (listCbCustom != null)
+            {
+                cbListHeaders = listCbCustom.Select(x => new CbListHeader { Name = x.Name, Category = resources.GetString("LOCGaCustomGameActions"), IsCustom = true }).ToList();
+            }
+
+            foreach (CbListHeader list in playActions)
+            {
+                var hasDefaultPlayAction = true;
+
+                foreach (CbListHeader customList in cbListHeaders)
+                {
+                    var tmpIsDefault = false;
+                    if (hasDefaultPlayAction)
+                    {
+                        tmpIsDefault = listCbCustom.FirstOrDefault(x => x.Name == customList.Name).DefaultFor.FirstOrDefault(y => y == list.Name) != null;
+                        hasDefaultPlayAction = tmpIsDefault ? false : true;
+                    }
+                    
+                    gameMenuItems.Add(new GameMenuItem
+                    {
+                        MenuSection = $"{resources.GetString("LOCGameActivity")}|{list.Name}",
+                        Description = customList.Name,
+                        Icon = tmpIsDefault ? Path.Combine(PluginFolder, "Resources", "tick.png") : null,
+                        Action = (gameMenuItem) =>
+                        {
+                            foreach (CustomGameActions customGameAction in listCbCustom)
+                            {
+                                var previousDefaultItem = customGameAction.DefaultFor.FirstOrDefault(y => y == list.Name);
+                                if (previousDefaultItem != null)
+                                {
+                                    customGameAction.DefaultFor.Remove(previousDefaultItem);
+                                }
+                            }
+                            
+                            var newDefaultItem = listCbCustom.SingleOrDefault(x => x.Name == customList.Name);
+                            if (newDefaultItem != null)
+                            {
+                                newDefaultItem.DefaultFor.Add(list.Name);
+                            }
+                            PluginDatabase.PluginSettings.Settings.CustomGameActions[GameMenu.Id] = listCbCustom;
+                            PluginSettings.SaveSettings();
+                        }
+                    });
+                }
+
+                gameMenuItems.Add(new GameMenuItem
+                {
+                    MenuSection = $"{resources.GetString("LOCGameActivity")}|{list.Name}",
+                    Description = list.Name,
+                    Icon = hasDefaultPlayAction ? Path.Combine(PluginFolder, "Resources", "tick.png") : null,
+                    Action = (gameMenuItem) =>
+                    {
+                        foreach (CustomGameActions customGameAction in listCbCustom)
+                        {
+                            var previousDefaultItem = customGameAction.DefaultFor.FirstOrDefault(y => y == list.Name);
+                            if (previousDefaultItem != null)
+                            {
+                                customGameAction.DefaultFor.Remove(previousDefaultItem);
+                            }
+                        }
+                        PluginDatabase.PluginSettings.Settings.CustomGameActions[GameMenu.Id] = listCbCustom;
+                        PluginSettings.SaveSettings();
+                    }
+                });
+
+            }
+
 #if DEBUG
             gameMenuItems.Add(new GameMenuItem
             {
@@ -972,11 +1052,28 @@ namespace GameActivity
 
                 DateTime DateSession = DateTime.Now.ToUniversalTime();
 
+                // Play action
+                var playAction = args.SourceAction?.Name ?? resources.GetString("LOCGameActivityDefaultAction");
+                var gameActionName = playAction;
+
+                PluginDatabase.PluginSettings.Settings.CustomGameActions.TryGetValue(args.Game.Id, out List<CustomGameActions> listCbCustom);
+
+                if (listCbCustom != null)
+                {
+                    foreach (CustomGameActions gameAction in listCbCustom)
+                    {
+                        if (gameAction.DefaultFor.FirstOrDefault(x => x == playAction) != null)
+                        {
+                            gameActionName = gameAction.Name;
+                        }
+                    }
+                }
+
                 runningActivity.GameActivitiesLog = PluginDatabase.Get(args.Game);
                 runningActivity.GameActivitiesLog.Items.Add(new Activity
                 {
                     IdConfiguration = PluginDatabase?.LocalSystem?.GetIdConfiguration() ?? -1,
-                    GameActionName = args.SourceAction?.Name ?? resources.GetString("LOCGameActivityDefaultAction"),
+                    GameActionName = gameActionName,
                     DateSession = DateSession,
                     SourceID = args.Game.SourceId == null ? default : args.Game.SourceId,
                     PlatformIDs = args.Game.PlatformIds ?? new List<Guid>()
@@ -988,7 +1085,7 @@ namespace GameActivity
                 runningActivity.activityBackup.Id = runningActivity.GameActivitiesLog.Id;
                 runningActivity.activityBackup.Name = runningActivity.GameActivitiesLog.Name;
                 runningActivity.activityBackup.ElapsedSeconds = 0;
-                runningActivity.activityBackup.GameActionName = args.SourceAction?.Name ?? resources.GetString("LOCGameActivityDefaultAction");
+                runningActivity.activityBackup.GameActionName = gameActionName;
                 runningActivity.activityBackup.IdConfiguration = PluginDatabase?.LocalSystem?.GetIdConfiguration() ?? -1;
                 runningActivity.activityBackup.DateSession = DateSession;
                 runningActivity.activityBackup.SourceID = args.Game.SourceId == null ? default : args.Game.SourceId;

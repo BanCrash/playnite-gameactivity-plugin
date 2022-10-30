@@ -8,6 +8,7 @@ using Playnite.SDK.Models;
 using System.Windows.Media;
 using MoreLinq;
 using CommonPluginsShared.Extensions;
+using Playnite.SDK.Plugins;
 
 namespace GameActivity
 {
@@ -141,7 +142,16 @@ namespace GameActivity
         public int VariatorLog { get; set; } = 4;
 
 
-        public Dictionary<Guid, List<string>> CustomGameActions = new Dictionary<Guid, List<string>>();
+        private Dictionary<Guid, List<CustomGameActions>> _CustomGameActions { get; set; } = new Dictionary<Guid, List<CustomGameActions>>();
+        public Dictionary<Guid, List<CustomGameActions>> CustomGameActions
+        {
+            get => _CustomGameActions;
+            set
+            {
+                _CustomGameActions = value;
+                OnPropertyChanged();
+            }
+        }
         #endregion
 
         // Playnite serializes settings object to a JSON object and saves it as text file.
@@ -329,6 +339,12 @@ namespace GameActivity
             }
 
             this.OnPropertyChanged();
+        }
+
+        public void SaveSettings()
+        {
+            Plugin.SavePluginSettings(Settings);
+            GameActivity.PluginDatabase.PluginSettings = this;
         }
 
         // Code execute when user decides to confirm changes made since BeginEdit was called.
