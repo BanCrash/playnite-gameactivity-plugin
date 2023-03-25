@@ -141,6 +141,8 @@ namespace GameActivity
         public int VariatorTime { get; set; } = 7;
         public int VariatorLog { get; set; } = 4;
 
+        public int RecentActivityWeek { get; set; } = 2;
+
 
         private Dictionary<Guid, List<CustomGameActions>> _CustomGameActions { get; set; } = new Dictionary<Guid, List<CustomGameActions>>();
         public Dictionary<Guid, List<CustomGameActions>> CustomGameActions
@@ -228,6 +230,18 @@ namespace GameActivity
                 OnPropertyChanged();
             }
         }
+
+        private string _RecentActivity { get; set; } = string.Empty;
+        [DontSerialize]
+        public string RecentActivity
+        {
+            get => _RecentActivity;
+            set
+            {
+                _RecentActivity = value;
+                OnPropertyChanged();
+            }
+        }
         #endregion  
     }
 
@@ -253,6 +267,13 @@ namespace GameActivity
 
             // LoadPluginSettings returns null if not saved data is available.
             Settings = savedSettings ?? new GameActivitySettings();
+
+
+            StoreColor finded = Settings.StoreColors.Find(x => x.Name.IsEqual("Origin"));
+            if (finded != null)
+            {
+                finded.Name = "EA app";
+            }
         }
 
         // Code executed when settings view is opened and user starts editing values.
@@ -267,7 +288,7 @@ namespace GameActivity
             }
 
             // Set missing
-            List<Guid> SourceIds = GameActivity.PluginDatabase.Database.Items
+            List <Guid> SourceIds = GameActivity.PluginDatabase.Database.Items
                                                 .Where(x => !Settings.StoreColors.Any(y => x.Value.SourceId == y.Id))
                                                 .Select(x => x.Value.SourceId)
                                                 .Distinct().ToList();
@@ -448,6 +469,7 @@ namespace GameActivity
                     Fill = new BrushConverter().ConvertFromString("#107c10") as SolidColorBrush;
                     break;
                 case "origin":
+                case "ea app":
                     Fill = new BrushConverter().ConvertFromString("#f56c2d") as SolidColorBrush;
                     break;
                 case "blizzard":

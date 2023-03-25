@@ -78,13 +78,13 @@ namespace GameActivity
                             ShowMinimizeButton = false,
                             ShowMaximizeButton = true,
                             ShowCloseButton = true,
-                            Width = 1280,
-                            Height = 740
+                            CanBeResizable = true,
+                            Height = 740,
+                            Width = 1280
                         };
 
                         GameActivityView ViewExtension = new GameActivityView(this);
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGamesActivitiesTitle"), ViewExtension, windowOptions);
-                        windowExtension.ResizeMode = ResizeMode.CanResize;
                         windowExtension.ShowDialog();
                     },
                     Visible = PluginSettings.Settings.EnableIntegrationButtonHeader
@@ -110,13 +110,13 @@ namespace GameActivity
                         ShowMinimizeButton = false,
                         ShowMaximizeButton = true,
                         ShowCloseButton = true,
-                        Width = 1280,
-                        Height = 740
+                        CanBeResizable = true,
+                        Height = 740,
+                        Width = 1280
                     };
 
                     GameActivityViewSingle ViewExtension = new GameActivityViewSingle(this, PluginDatabase.GameContext);
                     Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGameActivity"), ViewExtension, windowOptions);
-                    windowExtension.ResizeMode = ResizeMode.CanResize;
                     windowExtension.ShowDialog();
                 }
             }
@@ -258,7 +258,7 @@ namespace GameActivity
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private async void OnTimedEvent(Object source, ElapsedEventArgs e, Guid Id)
+        private void OnTimedEvent(Object source, ElapsedEventArgs e, Guid Id)
         {
             int fpsValue = 0;
             int cpuValue = PerfCounter.GetCpuPercentage();
@@ -564,7 +564,7 @@ namespace GameActivity
             runningActivity.timerBackup.Stop();
         }
 
-        private async void OnTimedBackupEvent(object source, ElapsedEventArgs e, Guid Id)
+        private void OnTimedBackupEvent(object source, ElapsedEventArgs e, Guid Id)
         {
             try
             {
@@ -664,9 +664,19 @@ namespace GameActivity
                     Icon = Path.Combine(PluginFolder, "Resources", "chart-646.png"),
                     Description = resources.GetString("LOCGameActivityViewGameActivity"),
                     Action = (gameMenuItem) =>
-                    {
+                    {            
+                        WindowOptions windowOptions = new WindowOptions
+                        {
+                            ShowMinimizeButton = false,
+                            ShowMaximizeButton = true,
+                            ShowCloseButton = true,
+                            CanBeResizable = true,
+                            Height = 740,
+                            Width = 1280
+                        };
+
                         GameActivityViewSingle ViewExtension = new GameActivityViewSingle(this, GameMenu);
-                        Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGameActivity"), ViewExtension);
+                        Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGameActivity"), ViewExtension, windowOptions);
                         windowExtension.ShowDialog();
                     }
                 }
@@ -790,13 +800,13 @@ namespace GameActivity
                             ShowMinimizeButton = false,
                             ShowMaximizeButton = true,
                             ShowCloseButton = true,
-                            Width = 1280,
-                            Height = 740
+                            CanBeResizable = true,
+                            Height = 740,
+                            Width = 1280
                         };
 
                         GameActivityView ViewExtension = new GameActivityView(this);
                         Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGamesActivitiesTitle"), ViewExtension, windowOptions);
-                        windowExtension.ResizeMode = ResizeMode.CanResize;
                         windowExtension.ShowDialog();
                     }
                 },
@@ -1256,51 +1266,56 @@ namespace GameActivity
             // Check backup
             try
             {
-                Parallel.ForEach(Directory.EnumerateFiles(PluginDatabase.Paths.PluginUserDataPath, "SaveSession_*.json"), (objectFile) =>
-                {
-                    Serialization.TryFromJsonFile<ActivityBackup>(objectFile, out ActivityBackup backupData);
-                    if (backupData != null)
+                Task.Run(() => { 
+                    Parallel.ForEach(Directory.EnumerateFiles(PluginDatabase.Paths.PluginUserDataPath, "SaveSession_*.json"), (objectFile) =>
                     {
-                        // If game is deleted...
-                        Game game = PluginDatabase.PlayniteApi.Database.Games.Get(backupData.Id);
-                        if (game == null)
-                        {
-                            try
-                            {
-                                FileSystem.DeleteFileSafe(objectFile);
-                            }
-                            catch (Exception ex)
-                            {
-                                Common.LogError(ex, false, true, PluginDatabase.PluginName);
-                            }
-                        }
-                        // Otherwise...
-                        else
-                        {
-                            Application.Current.Dispatcher.BeginInvoke((Action)delegate
-                            {
-                                PlayniteApi.Notifications.Add(new NotificationMessage(
-                                    $"{PluginDatabase.PluginName}-backup-{Path.GetFileNameWithoutExtension(objectFile)}",
-                                    PluginDatabase.PluginName + System.Environment.NewLine + string.Format(resources.GetString("LOCGaBackupExist"), backupData.Name),
-                                    NotificationType.Info,
-                                    () =>
-                                    {
-                                        WindowOptions windowOptions = new WindowOptions
-                                        {
-                                            ShowMinimizeButton = false,
-                                            ShowMaximizeButton = false,
-                                            ShowCloseButton = true,
-                                            CanBeResizable = true
-                                        };
+                        // Wait extension database are loaded
+                        System.Threading.SpinWait.SpinUntil(() => PluginDatabase.IsLoaded, -1);
 
-                                        GameActivityBackup ViewExtension = new GameActivityBackup(backupData);
-                                        Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGaBackupDataInfo"), ViewExtension, windowOptions);
-                                        windowExtension.ShowDialog();
-                                    }
-                                ));
-                            });
+                        Serialization.TryFromJsonFile<ActivityBackup>(objectFile, out ActivityBackup backupData);
+                        if (backupData != null)
+                        {
+                            // If game is deleted...
+                            Game game = PluginDatabase.PlayniteApi.Database.Games.Get(backupData.Id);
+                            if (game == null)
+                            {
+                                try
+                                {
+                                    FileSystem.DeleteFileSafe(objectFile);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Common.LogError(ex, false, true, PluginDatabase.PluginName);
+                                }
+                            }
+                            // Otherwise...
+                            else
+                            {
+                                Application.Current.Dispatcher.BeginInvoke((Action)delegate
+                                {
+                                    PlayniteApi.Notifications.Add(new NotificationMessage(
+                                        $"{PluginDatabase.PluginName}-backup-{Path.GetFileNameWithoutExtension(objectFile)}",
+                                        PluginDatabase.PluginName + System.Environment.NewLine + string.Format(resources.GetString("LOCGaBackupExist"), backupData.Name),
+                                        NotificationType.Info,
+                                        () =>
+                                        {
+                                            WindowOptions windowOptions = new WindowOptions
+                                            {
+                                                ShowMinimizeButton = false,
+                                                ShowMaximizeButton = false,
+                                                ShowCloseButton = true,
+                                                CanBeResizable = true
+                                            };
+
+                                            GameActivityBackup ViewExtension = new GameActivityBackup(backupData);
+                                            Window windowExtension = PlayniteUiHelper.CreateExtensionWindow(PlayniteApi, resources.GetString("LOCGaBackupDataInfo"), ViewExtension, windowOptions);
+                                            windowExtension.ShowDialog();
+                                        }
+                                    ));
+                                });
+                            }
                         }
-                    }
+                    });
                 });
             }
             catch (Exception ex)
