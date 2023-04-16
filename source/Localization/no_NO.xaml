@@ -54,7 +54,9 @@ Klikk for mer informasjon.</sys:String>
     <sys:String x:Key="LOCGameActivityTimeLabel">minutt(er)</sys:String>
 
     <sys:String x:Key="LOCGameActivityUseMsiAfterburner">Bruk MSI Afterburner</sys:String>
-    <sys:String x:Key="LOCGameActivityUseHWiNFO">Bruk HWiNFO</sys:String>
+    <sys:String x:Key="LOCGameActivityUseHWiNFOSharedMemory">Use HWiNFO SharedMemory</sys:String>
+    <sys:String x:Key="LOCGameActivityUseHWiNFOGadget">Use HWiNFO gadget reporting</sys:String>
+    <sys:String x:Key="LOCGameActivityIndex">Index</sys:String>
 
     <sys:String x:Key="LOCGameActivitySensorsID">Sensor-ID</sys:String>
     <sys:String x:Key="LOCGameActivityElementID">Element-ID</sys:String>
@@ -63,6 +65,8 @@ Klikk for mer informasjon.</sys:String>
     <sys:String x:Key="LOCGameActivityFps">FPS</sys:String>
     <sys:String x:Key="LOCGameActivityGpuTemp">GPU-temperatur</sys:String>
     <sys:String x:Key="LOCGameActivityCpuTemp">CPU-temperatur</sys:String>
+    <sys:String x:Key="LOCGameActivityCpuPower">CPU power</sys:String>
+    <sys:String x:Key="LOCGameActivityGpuPower">GPU power</sys:String>
 
     <sys:String x:Key="LOCGameActivityActiveWarning">Aktiver advarsler</sys:String>
     <sys:String x:Key="LOCGameActivityMinFps">Min. FPS</sys:String>
@@ -95,9 +99,14 @@ Klikk for mer informasjon.</sys:String>
     <sys:String x:Key="LOCGameActivityIgnoreSession">Ignorer korte spilløkter</sys:String>
     <sys:String x:Key="LOCGameActivitySetVariatorTime">Angi tidsvariant</sys:String>
     <sys:String x:Key="LOCGameActivitySetVariatorLog">Angi loggvariant</sys:String>
+    <sys:String x:Key="LOCGameActivityRecentActivityWeek">Number of weeks for recent activity</sys:String>
 
     <!-- GameActivityViewSingle -->
 
+    <sys:String x:Key="LOCGameActivityRecentActivity">Recent activity</sys:String>
+    <sys:String x:Key="LOCGameActivityNoRecentActivity">No recent activity</sys:String>
+    <sys:String x:Key="LOCGameActivityRecentActivitySingular">{0} hours past {1} week</sys:String>
+    <sys:String x:Key="LOCGameActivityRecentActivityPlurial">{0} hours past {1} weeks</sys:String>
     <sys:String x:Key="LOCGameActivityAvgPerDay">Gjennomsnittlig tid per dag</sys:String>
     <sys:String x:Key="LOCGameActivityFirstSession">Første økt</sys:String>
     <sys:String x:Key="LOCGameActivityLastSession">Siste økt</sys:String>

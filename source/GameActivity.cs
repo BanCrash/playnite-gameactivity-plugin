@@ -128,7 +128,7 @@ namespace GameActivity
 
         private bool CheckGoodForLogging(bool WithNotification = false)
         {
-            if (PluginSettings.Settings.EnableLogging && PluginSettings.Settings.UseHWiNFO)
+            if (PluginSettings.Settings.EnableLogging && (PluginSettings.Settings.UseHWiNFO || PluginSettings.Settings.UseHWiNFOGadget))
             {
                 bool runHWiNFO = false;
                 Process[] pname = Process.GetProcessesByName("HWiNFO32");
@@ -446,6 +446,38 @@ namespace GameActivity
                                     }
                                 }
                             }
+
+                            // Find sensors gpu power
+                            if (sensorsID.ToLower() == PluginSettings.Settings.HWiNFO_gpuP_elementID.ToLower())
+                            {
+                                // Find data gpu
+                                foreach (dynamic items in sensorItemsOBJ["sensors"])
+                                {
+                                    dynamic itemOBJ = Serialization.FromJson<dynamic>(Serialization.ToJson(items));
+                                    string dataID = "0x" + ((uint)itemOBJ["dwSensorID"]).ToString("X");
+
+                                    if (dataID.ToLower() == PluginSettings.Settings.HWiNFO_gpuP_elementID.ToLower())
+                                    {
+                                        gpuPValue = (int)Math.Round((Double)itemOBJ["Value"]);
+                                    }
+                                }
+                            }
+
+                            // Find sensors cpu power
+                            if (sensorsID.ToLower() == PluginSettings.Settings.HWiNFO_cpuP_sensorsID.ToLower())
+                            {
+                                // Find data gpu
+                                foreach (dynamic items in sensorItemsOBJ["sensors"])
+                                {
+                                    dynamic itemOBJ = Serialization.FromJson<dynamic>(Serialization.ToJson(items));
+                                    string dataID = "0x" + ((uint)itemOBJ["dwSensorID"]).ToString("X");
+
+                                    if (dataID.ToLower() == PluginSettings.Settings.HWiNFO_cpuP_sensorsID.ToLower())
+                                    {
+                                        cpuPValue = (int)Math.Round((Double)itemOBJ["Value"]);
+                                    }
+                                }
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -453,6 +485,23 @@ namespace GameActivity
                         logger.Warn("Fail get HWiNFO");
                         Common.LogError(ex, true, "Fail get HWiNFO");
                     }
+                }
+            }
+            else if (PluginSettings.Settings.UseHWiNFOGadget && CheckGoodForLogging())
+            {
+                try
+                {
+                    int.TryParse(HWiNFOGadget.GetData(PluginSettings.Settings.HWiNFO_fps_index), out fpsValue);
+                    int.TryParse(HWiNFOGadget.GetData(PluginSettings.Settings.HWiNFO_gpu_index), out gpuValue);
+                    int.TryParse(HWiNFOGadget.GetData(PluginSettings.Settings.HWiNFO_gpuT_index), out gpuTValue);
+                    int.TryParse(HWiNFOGadget.GetData(PluginSettings.Settings.HWiNFO_cpuT_index), out cpuTValue);
+                    int.TryParse(HWiNFOGadget.GetData(PluginSettings.Settings.HWiNFO_cpuP_index), out cpuPValue);
+                    int.TryParse(HWiNFOGadget.GetData(PluginSettings.Settings.HWiNFO_gpuP_index), out gpuPValue);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error("Fail initialize HWiNFOGadget");
+                    Common.LogError(ex, true, "Fail initialize HWiNFOGadget");
                 }
             }
 
