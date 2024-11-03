@@ -52,7 +52,7 @@ namespace GameActivity.Views
             if (listCbCustom != null) 
             {
                 List<CbListHeader> tmp = listCbCustom.Select(x => new CbListHeader { Name = x.Name, Category = resources.GetString("LOCGaCustomGameActions"), IsCustom = true }).ToList();
-                cbListHeaders = cbListHeaders.Concat(tmp).ToList();
+                CbListHeaders = CbListHeaders.Concat(tmp).ToList();
             }
 
 
@@ -216,7 +216,7 @@ namespace GameActivity.Views
                 var findedItem = listCbCustom.SingleOrDefault(x => x.Name == finded.Name);
                 listCbCustom.Remove(findedItem);
                 PluginDatabase.PluginSettings.Settings.CustomGameActions[GameContext.Id] = listCbCustom;
-                plugin.SavePluginSettings(PluginDatabase.PluginSettings.Settings);
+                Plugin.SavePluginSettings(PluginDatabase.PluginSettings.Settings);
             }
         }
 
