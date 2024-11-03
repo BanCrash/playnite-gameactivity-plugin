@@ -1,5 +1,6 @@
 ﻿using CommonPlayniteShared.Common;
 using CommonPluginsShared;
+using GameActivity.Controls;
 using GameActivity.Models;
 using GameActivity.Services;
 using Playnite.SDK.Models;
@@ -19,14 +20,14 @@ namespace GameActivity.Views
     {
         private ActivityDatabase PluginDatabase => GameActivity.PluginDatabase;
         private ViewDataContext ViewDataContext { get; set; } = new ViewDataContext();
-        private ActivityBackup activityBackup { get; set; }
+        private ActivityBackup ActivityBackup { get; set; }
 
         private Guid Id { get; set; }
 
 
         public GameActivityBackup(ActivityBackup activityBackup)
         {
-            this.activityBackup = activityBackup;
+            this.ActivityBackup = activityBackup;
             Game game = PluginDatabase.PlayniteApi.Database.Games.Get(activityBackup.Id);
             this.Id = game.Id;
 
@@ -43,6 +44,30 @@ namespace GameActivity.Views
             }
             ViewDataContext.DateLastPlayed = (DateTime)game?.LastActivity;
             ViewDataContext.Playtime = game.Playtime;
+
+            if (activityBackup.ItemsDetailsDatas?.Count == 0)
+            {
+                PART_ChartLogContener.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                PluginChartLog PART_ChartLog = (PluginChartLog)PART_ChartLogContener.Children[0];
+                PART_ChartLog.SetDefaultDataContext();
+
+                GameActivities pluginData = PluginDatabase.GetDefault(activityBackup.Id);
+                pluginData.Items.Add(new Activity
+                {
+                    IdConfiguration = activityBackup.IdConfiguration,
+                    GameActionName = activityBackup.GameActionName,
+                    DateSession = activityBackup.DateSession,
+                    SourceID = activityBackup.SourceID,
+                    PlatformIDs = activityBackup.PlatformIDs,
+                    ElapsedSeconds = activityBackup.ElapsedSeconds
+                });
+                pluginData.ItemsDetails.Items.TryAdd(activityBackup.DateSession, activityBackup.ItemsDetailsDatas);
+
+                PART_ChartLog.GetActivityForGamesLogGraphics(pluginData, 0, 10, activityBackup.DateSession, "1");
+            }
         }
 
 
@@ -55,20 +80,20 @@ namespace GameActivity.Views
         {
             try
             {
-                Game game = PluginDatabase.PlayniteApi.Database.Games.Get(activityBackup.Id);
-                GameActivities pluginData = PluginDatabase.Get(activityBackup.Id);
+                Game game = PluginDatabase.PlayniteApi.Database.Games.Get(ActivityBackup.Id);
+                GameActivities pluginData = PluginDatabase.Get(ActivityBackup.Id);
 
-                game.Playtime += activityBackup.ElapsedSeconds;
+                game.Playtime += ActivityBackup.ElapsedSeconds;
                 pluginData.Items.Add(new Activity
                 {
-                    IdConfiguration = activityBackup.IdConfiguration,
-                    GameActionName = activityBackup.GameActionName,
-                    DateSession = activityBackup.DateSession,
-                    SourceID = activityBackup.SourceID,
-                    PlatformIDs = activityBackup.PlatformIDs,
-                    ElapsedSeconds = activityBackup.ElapsedSeconds
+                    IdConfiguration = ActivityBackup.IdConfiguration,
+                    GameActionName = ActivityBackup.GameActionName,
+                    DateSession = ActivityBackup.DateSession,
+                    SourceID = ActivityBackup.SourceID,
+                    PlatformIDs = ActivityBackup.PlatformIDs,
+                    ElapsedSeconds = ActivityBackup.ElapsedSeconds
                 });
-                pluginData.ItemsDetails.Items.TryAdd(activityBackup.DateSession, activityBackup.ItemsDetailsDatas);
+                pluginData.ItemsDetails.Items.TryAdd(ActivityBackup.DateSession, ActivityBackup.ItemsDetailsDatas);
 
                 PluginDatabase.PlayniteApi.Database.Games.Update(game);
                 PluginDatabase.Update(pluginData);
@@ -98,6 +123,14 @@ namespace GameActivity.Views
             }
 
             ((Window)this.Parent).Close();
+        }
+
+        private void Grid_Loaded(object sender, RoutedEventArgs e)
+        {
+            PluginChartLog PART_ChartLog = (PluginChartLog)PART_ChartLogContener.Children[0];
+            PART_ChartLog.Width = PART_ChartLogContener.ActualWidth;
+            PART_ChartLog.Height = PART_ChartLogContener.ActualHeight;
+            ((PluginChartLogDataContext)PART_ChartLog.DataContext).UseControls = false;
         }
     }
 
